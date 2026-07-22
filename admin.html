@@ -7,8 +7,8 @@
 <meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bosco:#1E3D2F;--salvia:#6B8577;--oro:#C9A227;--carta:#F7F5EF;--bianco:#fff;
-        --inchiostro:#24291F;--grigio:#6E7268;--linea:#DDD8C9;--errore:#A63D2F;}
+  :root{--bosco:#2B4093;--salvia:#5C6BAE;--oro:#67C064;--carta:#F8F7F4;--bianco:#fff;
+        --inchiostro:#232830;--grigio:#6B7076;--linea:#E4E2DA;--errore:#DB4B54;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.55;
        color:var(--inchiostro);background:var(--carta);}
@@ -46,6 +46,21 @@
   .msg{margin:10px 0;color:var(--errore);}
   .ok{color:var(--bosco);}
   .override{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  .es{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12.5px;font-weight:600;}
+  .es-avanza{background:#E2F3E1;color:#2E7D31;}
+  .es-dubbio{background:#FBF0D6;color:#8A6D16;}
+  .es-scarta{background:#FBE3E4;color:#A5323B;}
+  .es-none{color:var(--grigio);font-size:12.5px;}
+  .azioni{background:var(--bianco);border:1px solid var(--linea);border-radius:8px;padding:14px 16px;margin:14px 0;}
+  .azioni .titolo{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--salvia);font-weight:600;margin-bottom:8px;}
+  .azioni .esiti{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .esiti button{background:var(--bianco);color:var(--inchiostro);border:1px solid var(--linea);}
+  .esiti button.on-avanza{background:#2E7D31;color:#fff;border-color:#2E7D31;}
+  .esiti button.on-dubbio{background:#B8901F;color:#fff;border-color:#B8901F;}
+  .esiti button.on-scarta{background:var(--errore);color:#fff;border-color:var(--errore);}
+  .azioni textarea{width:100%;min-height:70px;resize:vertical;}
+  .danger{background:none;color:var(--errore);border:1px solid #E9BFC1;}
+  .barra-note{display:flex;gap:8px;align-items:center;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -66,6 +81,7 @@
 <div id="app" style="display:none;">
   <h1>Candidature — Stadio 1</h1>
   <div class="filtri">
+    <input type="text" id="f_q" placeholder="Cerca nome o email" style="min-width:200px;">
     <select id="f_area">
       <option value="">Tutte le aree</option>
       <option value="lettere">Lettere</option>
@@ -74,10 +90,23 @@
       <option value="primaria">Primaria</option>
       <option value="inglese">Inglese</option>
     </select>
+    <select id="f_sede">
+      <option value="">Tutte le sedi</option>
+      <option>Castelvenere (BN)</option>
+      <option>Caserta (CE)</option>
+      <option>Entrambe</option>
+    </select>
     <select id="f_stato">
       <option value="">Tutti gli stati</option>
       <option value="inviata">Inviata</option>
       <option value="in_compilazione">In compilazione</option>
+    </select>
+    <select id="f_esito">
+      <option value="">Ogni esito</option>
+      <option value="__none">Senza esito</option>
+      <option value="avanza">Avanza</option>
+      <option value="dubbio">In dubbio</option>
+      <option value="scarta">Scarta</option>
     </select>
     <button class="ghost" id="btnRicarica">Aggiorna</button>
     <button class="ghost" id="btnCsv">Esporta CSV</button>
@@ -85,7 +114,7 @@
   <table>
     <thead><tr>
       <th>Candidato</th><th>Area</th><th>Sede</th><th>Combinazione C1</th>
-      <th>Stato</th><th>Inviata il</th><th>CV</th>
+      <th>Stato</th><th>Esito</th><th>Inviata il</th><th>CV</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -133,15 +162,33 @@
     if(!r.error) pool = r.data;
   }
 
+  var ES_LAB = {avanza:"Avanza", dubbio:"In dubbio", scarta:"Scarta"};
+  function badgeEsito(e){
+    if(!e) return "<span class='es-none'>—</span>";
+    return "<span class='es es-"+e+"'>"+ES_LAB[e]+"</span>";
+  }
+
   async function carica(){
     var q = sb.from("candidates").select("*").order("created_at", {ascending:false});
-    if(el("f_area").value) q = q.eq("area", el("f_area").value);
+    if(el("f_area").value)  q = q.eq("area", el("f_area").value);
+    if(el("f_sede").value)  q = q.eq("sede", el("f_sede").value);
     if(el("f_stato").value) q = q.eq("status", el("f_stato").value);
+    var fe = el("f_esito").value;
+    if(fe==="__none") q = q.is("esito", null);
+    else if(fe)       q = q.eq("esito", fe);
     var r = await q;
     if(r.error){ alert("Errore di caricamento: "+r.error.message); return; }
     cache = r.data;
+    render();
+  }
+  function render(){
+    var termine = (el("f_q").value||"").trim().toLowerCase();
+    var righe = cache.filter(function(c){
+      if(!termine) return true;
+      return ((c.cognome||"")+" "+(c.nome||"")+" "+(c.email||"")).toLowerCase().indexOf(termine) >= 0;
+    });
     var tb = el("tbody"); tb.innerHTML = "";
-    cache.forEach(function(c){
+    righe.forEach(function(c){
       var tr = document.createElement("tr");
       tr.className = "riga-cand";
       tr.innerHTML =
@@ -150,6 +197,7 @@
         "<td>"+esc(c.sede||"—")+"</td>"+
         "<td>"+esc(c.c1_combo||"—")+"</td>"+
         "<td><span class='stato st-"+esc(c.status)+"'>"+esc(c.status.replace(/_/g," "))+"</span></td>"+
+        "<td>"+badgeEsito(c.esito)+"</td>"+
         "<td>"+(c.submitted_at ? new Date(c.submitted_at).toLocaleString("it-IT") : "—")+"</td>"+
         "<td>"+(c.cv_path ? "PDF" : "—")+"</td>";
       tr.addEventListener("click", function(){ dettaglio(c); });
@@ -158,7 +206,10 @@
   }
   el("btnRicarica").addEventListener("click", carica);
   el("f_area").addEventListener("change", carica);
+  el("f_sede").addEventListener("change", carica);
   el("f_stato").addEventListener("change", carica);
+  el("f_esito").addEventListener("change", carica);
+  el("f_q").addEventListener("input", render);
 
   function blocco(k, v){
     return "<div class='blocco'><div class='k'>"+esc(k)+"</div><pre>"+esc(v)+"</pre></div>";
@@ -175,6 +226,24 @@
       " · "+esc(c.comune||"")+" · Sede: "+esc(c.sede||"—")+" · Auto: "+esc(c.auto_propria||"—")+
       " · Percorrenza: "+esc(c.percorrenza||"—")+
       " · Consenso futuro: "+(c.consenso_futuro?"sì":"no")+"</div>";
+
+    html += "<div class='azioni'>"+
+      "<div class='titolo'>Esito Stadio 1</div>"+
+      "<div class='esiti'>"+
+        "<button data-es='avanza' class='"+(c.esito==='avanza'?'on-avanza':'')+"'>Avanza</button>"+
+        "<button data-es='dubbio' class='"+(c.esito==='dubbio'?'on-dubbio':'')+"'>In dubbio</button>"+
+        "<button data-es='scarta' class='"+(c.esito==='scarta'?'on-scarta':'')+"'>Scarta</button>"+
+        "<span id='es_msg' style='color:var(--grigio);font-size:13px;margin-left:6px;'></span>"+
+      "</div>"+
+      "<div class='titolo'>Note interne</div>"+
+      "<textarea id='note_txt' placeholder='Annotazioni sul candidato, visibili solo al team'>"+esc(c.note_admin||"")+"</textarea>"+
+      "<div class='barra-note'>"+
+        "<button class='ghost' id='note_btn'>Salva nota</button>"+
+        "<span id='note_msg' style='color:var(--grigio);font-size:13px;'></span>"+
+        "<span style='flex:1'></span>"+
+        "<button class='danger' id='del_btn'>Elimina candidatura</button>"+
+      "</div>"+
+    "</div>";
 
     html += "<div class='blocco combo'><div class='k'>Combinazione C1 · "+esc(c.c1_combo||"—")+"</div>"+
       "<pre>"+esc((combo.strategia||"")+" — "+(combo.definizione_operativa||"")+"\nTema: "+(combo.topic||"")+" · "+(combo.obiettivo_gp||""))+"</pre>"+
@@ -229,12 +298,44 @@
       el("ov_msg").innerHTML = "<span class='ok'>Registrato.</span>";
       carica();
     });
+
+    Array.prototype.forEach.call(d.querySelectorAll(".esiti button[data-es]"), function(b){
+      b.addEventListener("click", async function(){
+        var nuovo = (c.esito===b.dataset.es) ? null : b.dataset.es;
+        var r = await sb.from("candidates").update({esito:nuovo}).eq("id", c.id);
+        if(r.error){ el("es_msg").textContent = "Errore: "+r.error.message; return; }
+        c.esito = nuovo;
+        for(var i=0;i<cache.length;i++){ if(cache[i].id===c.id){ cache[i].esito = nuovo; break; } }
+        Array.prototype.forEach.call(d.querySelectorAll(".esiti button[data-es]"), function(x){
+          x.className = (c.esito===x.dataset.es) ? ("on-"+x.dataset.es) : "";
+        });
+        el("es_msg").textContent = nuovo ? "Salvato." : "Esito rimosso.";
+        render();
+      });
+    });
+
+    el("note_btn").addEventListener("click", async function(){
+      var r = await sb.from("candidates").update({note_admin: el("note_txt").value}).eq("id", c.id);
+      if(r.error){ el("note_msg").textContent = "Errore: "+r.error.message; return; }
+      c.note_admin = el("note_txt").value;
+      el("note_msg").textContent = "Nota salvata.";
+    });
+
+    el("del_btn").addEventListener("click", async function(){
+      if(!confirm("Eliminare definitivamente la candidatura di "+(c.cognome||"")+" "+(c.nome||"")+"?\nL'operazione non si può annullare.")) return;
+      if(c.cv_path){ try{ await sb.storage.from("cv").remove([c.cv_path]); }catch(e){} }
+      var r = await sb.rpc("admin_delete_candidate", {p_candidate_id: c.id});
+      if(r.error){ alert("Errore in eliminazione: "+r.error.message); return; }
+      d.style.display = "none";
+      carica();
+    });
   }
 
   el("btnCsv").addEventListener("click", function(){
-    var righe = [["cognome","nome","email","area","sede","combo","stato","inviata_il"]];
+    var righe = [["cognome","nome","email","area","sede","combo","stato","esito","note","inviata_il"]];
     cache.forEach(function(c){
       righe.push([c.cognome,c.nome,c.email,AREE[c.area]||c.area,c.sede||"",c.c1_combo||"",c.status,
+                  (ES_LAB[c.esito]||""),(c.note_admin||""),
                   c.submitted_at?new Date(c.submitted_at).toISOString():""]);
     });
     var csv = righe.map(function(r){ return r.map(function(v){

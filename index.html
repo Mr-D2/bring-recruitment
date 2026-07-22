@@ -509,6 +509,7 @@ Se hai lavorato con una sola fascia d'età, dicci pure che è così e raccontaci
     <h2>Abbiamo finito.</h2>
     <p>Grazie per il tempo che ci hai dedicato — sappiamo che è stato più di quello di una candidatura ordinaria, ed è voluto: preferiamo chiedere molto a pochi passaggi piuttosto che poco a molti.</p>
     <p>Leggiamo tutte le risposte una per una. Ti ricontatteremo entro 5 giorni in ogni caso, anche se il percorso non prosegue.</p>
+    <p style="margin-top:24px;"><button class="link-tenue" id="btnAltra">Compila una nuova candidatura</button></p>
   </div>
 </section>
 
@@ -857,6 +858,11 @@ Se hai lavorato con una sola fascia d'età, dicci pure che è così e raccontaci
       location.reload();
     }
   });
+  var btnAltra = document.getElementById("btnAltra");
+  if(btnAltra){ btnAltra.addEventListener("click", function(){
+    try{ localStorage.removeItem(CHIAVE); }catch(e){}
+    location.reload();
+  }); }
 
   agganciaSalvataggio(document);
   ripristina();

@@ -22,10 +22,10 @@
        color:var(--inchiostro); background:var(--carta);}
   @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{transition:none!important;} }
 
-  header.masthead{background:var(--bianco); padding:18px 20px 14px; border-bottom:1px solid var(--linea);}
-  .masthead .inner{max-width:680px; margin:0 auto;}
-  .masthead img{height:44px; width:auto; display:block;}
-  .masthead .tag{font-size:13px; color:var(--grigio); margin-top:9px;}
+  header.masthead{background:var(--bianco); padding:20px 20px 16px; border-bottom:1px solid var(--linea);}
+  .masthead .inner{max-width:680px; margin:0 auto; text-align:center;}
+  .masthead img{height:52px; width:auto; display:block; margin:0 auto;}
+  .masthead .tag{font-size:13px; color:var(--grigio); margin-top:10px;}
   .brandstrip{height:4px; display:flex;}
   .brandstrip i{flex:1;}
   .brandstrip i:nth-child(1){background:var(--blu);}
@@ -33,8 +33,10 @@
   .brandstrip i:nth-child(3){background:var(--rosso);}
 
   .rail{position:sticky; top:0; z-index:10; background:var(--bianco); border-bottom:1px solid var(--linea);}
-  .rail .track{height:5px; background:var(--blu-tenue);}
-  .rail .bar{height:5px; background:var(--verde); width:0%; transition:width .35s ease;}
+  .rail .track{height:6px; background:var(--blu-tenue);}
+  .rail .bar{height:6px; width:0%; transition:width .35s ease;
+    background-image:linear-gradient(90deg, var(--blu) 0%, var(--blu) 32%, var(--verde) 34%, var(--verde) 65%, var(--rosso) 67%, var(--rosso) 100%);
+    background-size:100vw 100%; background-repeat:no-repeat;}
   .rail .label{max-width:680px; margin:0 auto; padding:7px 20px; font-size:12.5px;
     letter-spacing:.05em; text-transform:uppercase; color:var(--grigio);}
 
@@ -360,7 +362,7 @@
     <div class="errore-msg">Scrivi almeno 400 caratteri.</div>
   </div>
 
-  <div class="micronota">Le due domande che seguono sono invece di carattere generale: <strong>non</strong> riguardano la strategia e il tema assegnati qui sopra.</div>
+  <div class="micronota">La domanda qui sotto è invece di carattere generale e <strong>non</strong> riguarda l'assegnazione. L'ultima domanda della sezione, invece, torna sul <strong>tuo tema assegnato</strong>.</div>
 
   <div class="campo" id="c-C2">
     <label for="C2">Uno studente partecipa attivamente in classe, ragiona bene ad alta voce e interviene in modo pertinente, ma va sistematicamente male nelle verifiche scritte. Come lo valuti a fine quadrimestre, e cosa fai nel frattempo?</label>
@@ -652,11 +654,18 @@ Se hai lavorato con una sola fascia d'età, dicci pure che è così e raccontaci
     document.getElementById("A3_c3").style.display = v==="intenzione" ? "" : "none";
   }
 
-  var C3_SEC = "Nella tua classe hai tre studenti che raggiungono gli obiettivi rapidamente e lavorano bene in autonomia, e due che stanno ancora consolidando i prerequisiti necessari per affrontare l'argomento del giorno. Descrivi concretamente come organizzi una tua lezione tipo: cosa succede, chi fa cosa, in che ordine.";
-  var C3_PRI = "In una classe prima hai due bambini che leggono già correntemente e tre che non hanno ancora automatizzato il riconoscimento delle lettere. Descrivi concretamente come organizzi una tua attività tipo: cosa succede, chi fa cosa, in che ordine.";
+  var C3_SEC = "Nella tua classe hai tre studenti che raggiungono gli obiettivi rapidamente e lavorano bene in autonomia, e due che stanno ancora consolidando i prerequisiti necessari per affrontare l'argomento del giorno. Descrivi concretamente come organizzi una lezione";
+  var C3_PRI = "In una classe prima hai due bambini che leggono già correntemente e tre che non hanno ancora automatizzato il riconoscimento delle lettere. Descrivi concretamente come organizzi un'attività";
   function applicaArea(){
     var area = stato["R0"]||"";
-    document.getElementById("C3_label").textContent = (area==="primaria") ? C3_PRI : C3_SEC;
+    var base = (area==="primaria") ? C3_PRI : C3_SEC;
+    var topic = (stato._combo||{}).topic;
+    var lab = document.getElementById("C3_label");
+    if(topic){
+      lab.innerHTML = base + " ambientata proprio sul <strong>tuo tema assegnato «"+topic+"»</strong>: cosa succede, chi fa cosa, in che ordine.";
+    } else {
+      lab.textContent = base + " sul tema che ti è stato assegnato all'inizio della sezione: cosa succede, chi fa cosa, in che ordine.";
+    }
   }
 
   function mostraCombo(c){
@@ -831,7 +840,7 @@ Se hai lavorato con una sola fascia d'età, dicci pure che è così e raccontaci
       B2: val("B2"), B3: val("B3"),
       C1: {combo: (stato._combo||{}).combo, testo: val("C1")},
       C2: val("C2"),
-      C3: {variante: (area==="primaria")?"PRI":"SEC", testo: val("C3")},
+      C3: {variante: (area==="primaria")?"PRI":"SEC", topic: (stato._combo||{}).topic||null, testo: val("C3")},
       D1: D1_voci.map(function(v,i){ return {voce:v, risposta:stato["r_D1_"+i]||""}; }),
       D2: val("D2"),
       E1: val("E1"),

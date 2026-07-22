@@ -9,6 +9,6 @@
 // NON inserire mai qui la "service_role" key.
 // ============================================================
 window.BRING_CONFIG = {
-  SUPABASE_URL: "https://SOSTITUISCI.supabase.co",
-  SUPABASE_ANON_KEY: "SOSTITUISCI_ANON_KEY"
+  SUPABASE_URL: "https://jnhdghxcgyimyfciibwj.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_BIeBNEBuOelANdOoO1VFag_aXhWbJ2U"
 };

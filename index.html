@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Candidatura docenti — br-ing · AS 2026/27</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bosco:#1E3D2F; --bosco-scuro:#152A20; --salvia:#6B8577;
+    --oro:#C9A227; --oro-tenue:#F0E4C0;
+    --carta:#F7F5EF; --bianco:#FFFFFF;
+    --inchiostro:#24291F; --grigio:#6E7268; --linea:#DDD8C9;
+    --errore:#A63D2F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter',system-ui,sans-serif; font-size:16px; line-height:1.6;
+    color:var(--inchiostro); background:var(--carta);
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{transition:none!important;} }
+
+  header.masthead{
+    background:var(--bosco); color:var(--carta); padding:26px 20px 22px;
+  }
+  .masthead .inner{max-width:680px; margin:0 auto;}
+  .wordmark{
+    font-family:'Fraunces',serif; font-weight:600; font-size:28px; letter-spacing:.01em;
+  }
+  .wordmark span{color:var(--oro);}
+  .masthead .tag{font-size:13.5px; color:#C8D2C4; margin-top:4px;}
+
+  .rail{position:sticky; top:0; z-index:10; background:var(--bosco-scuro);}
+  .rail .bar{height:5px; background:var(--oro); width:0%; transition:width .35s ease;}
+  .rail .label{
+    max-width:680px; margin:0 auto; padding:7px 20px; font-size:12.5px;
+    letter-spacing:.06em; text-transform:uppercase; color:#B9C6B4;
+  }
+
+  main{max-width:680px; margin:0 auto; padding:34px 20px 90px;}
+
+  .step{display:none;}
+  .step.attivo{display:block; animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  h1,h2{font-family:'Fraunces',serif; font-weight:600; color:var(--bosco); line-height:1.25;}
+  h1{font-size:28px; margin-bottom:14px;}
+  h2{font-size:22px; margin-bottom:10px;}
+  .eyebrow{
+    font-size:12.5px; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--salvia); font-weight:600; margin-bottom:8px;
+  }
+  .prosa p{margin-bottom:12px;}
+  .nota-sezione{
+    background:var(--bianco); border-left:3px solid var(--salvia);
+    padding:14px 16px; margin:18px 0 26px; font-size:15px;
+  }
+
+  .campo{margin:26px 0;}
+  .campo > label, .campo > .etichetta{
+    display:block; font-weight:600; margin-bottom:8px; white-space:pre-line;
+  }
+  .suggerimento{font-size:13.5px; color:var(--grigio); margin-top:6px;}
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],select,textarea{
+    width:100%; padding:11px 12px; font:inherit; color:var(--inchiostro);
+    background:var(--bianco); border:1px solid var(--linea); border-radius:6px;
+  }
+  textarea{resize:vertical; min-height:120px;}
+  input:focus,select:focus,textarea:focus{
+    outline:2px solid var(--oro); outline-offset:1px; border-color:var(--oro);
+  }
+  .riga{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:560px){ .riga{grid-template-columns:1fr;} }
+
+  .scelte label{
+    display:flex; gap:10px; align-items:flex-start; padding:10px 12px;
+    background:var(--bianco); border:1px solid var(--linea); border-radius:6px;
+    margin-bottom:8px; cursor:pointer; font-weight:400;
+  }
+  .scelte label:has(input:checked){border-color:var(--bosco); background:#F0F2EA;}
+  .scelte input{margin-top:4px; accent-color:var(--bosco);}
+
+  .contatore{font-size:12.5px; color:var(--grigio); text-align:right; margin-top:4px;}
+  .contatore.ok{color:var(--bosco);}
+
+  .rep-item{
+    background:var(--bianco); border:1px solid var(--linea); border-radius:8px;
+    padding:14px; margin-bottom:10px; position:relative;
+  }
+  .rep-item .togli{
+    position:absolute; top:8px; right:10px; background:none; border:none;
+    color:var(--grigio); font-size:13px; cursor:pointer; text-decoration:underline;
+  }
+  .btn-aggiungi{
+    background:none; border:1px dashed var(--salvia); color:var(--bosco);
+    padding:9px 16px; border-radius:6px; font:inherit; font-weight:500; cursor:pointer;
+  }
+
+  /* Carta della combinazione assegnata — firma visiva del form */
+  .carta-c1{
+    background:var(--bianco); border:1px solid var(--linea);
+    border-left:5px solid var(--oro); border-radius:8px;
+    padding:20px 22px; margin:14px 0 22px;
+    box-shadow:0 2px 10px rgba(30,61,47,.06);
+  }
+  .carta-c1 .voce{margin-bottom:10px;}
+  .carta-c1 .k{
+    font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--salvia); font-weight:600;
+  }
+  .carta-c1 .v{font-family:'Fraunces',serif; font-size:18px; color:var(--bosco);}
+  .carta-c1 .def{font-size:15px; color:var(--inchiostro);}
+
+  table.matrice{width:100%; border-collapse:collapse; background:var(--bianco);
+    border:1px solid var(--linea); border-radius:8px; overflow:hidden; font-size:14.5px;}
+  table.matrice th, table.matrice td{padding:10px 8px; border-bottom:1px solid var(--linea); text-align:center;}
+  table.matrice td:first-child{text-align:left; font-weight:500; width:52%;}
+  table.matrice thead th{background:#EFEDE3; font-weight:600;}
+  table.matrice input{accent-color:var(--bosco); width:17px; height:17px;}
+  @media(max-width:560px){
+    table.matrice{font-size:13px;}
+    table.matrice td:first-child{width:46%;}
+  }
+
+  .nav-step{display:flex; justify-content:space-between; gap:12px; margin-top:38px;}
+  button.primario, button.secondario{
+    font:inherit; font-weight:600; padding:13px 26px; border-radius:8px; cursor:pointer;
+  }
+  button.primario{background:var(--bosco); color:var(--carta); border:none;}
+  button.primario:hover{background:var(--bosco-scuro);}
+  button.primario:disabled{background:var(--grigio); cursor:not-allowed;}
+  button.secondario{background:none; color:var(--bosco); border:1px solid var(--linea);}
+
+  .errore-msg{color:var(--errore); font-size:14px; margin-top:6px; display:none;}
+  .campo.invalido .errore-msg{display:block;}
+  .campo.invalido input, .campo.invalido select, .campo.invalido textarea{border-color:var(--errore);}
+
+  .avviso{background:#FBEFE9; border:1px solid #E4C0B4; color:var(--errore);
+    padding:12px 14px; border-radius:6px; margin:14px 0; display:none;}
+
+  a{color:var(--bosco);}
+  .fine{text-align:center; padding:30px 0;}
+  .fine .sigillo{
+    width:56px; height:56px; margin:0 auto 18px; border-radius:50%;
+    background:var(--oro); display:flex; align-items:center; justify-content:center;
+    color:var(--bosco-scuro); font-family:'Fraunces',serif; font-size:26px;
+  }
+  footer{max-width:680px; margin:0 auto; padding:18px 20px 40px;
+    font-size:13px; color:var(--grigio); border-top:1px solid var(--linea);}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <div class="wordmark">br-ing<span>.</span></div>
+    <div class="tag">Scuola paritaria bilingue · Castelvenere (BN) — Caserta (CE) · Cambridge International</div>
+  </div>
+</header>
+
+<div class="rail">
+  <div class="bar" id="railBar"></div>
+  <div class="label" id="railLabel">Candidatura docenti · AS 2026/27</div>
+</div>
+
+<main>
+
+<!-- ============ STEP 0: APERTURA + IDENTIFICAZIONE ============ -->
+<section class="step attivo" data-step="0" data-nome="Inizio">
+  <div class="prosa">
+    <h1>Candidatura docenti — br-ing<br>Anno scolastico 2026/27</h1>
+    <p>br-ing è una scuola primaria e secondaria di primo grado paritaria bilingue, con sedi a Castelvenere (BN) e Caserta (CE). Lavoriamo con un impianto metacognitivo strutturato e siamo scuola Cambridge International.</p>
+    <p>Questo è il primo passo del nostro processo di selezione. Richiede circa 25 minuti e ti chiediamo di rispondere con calma: alcune domande sono aperte e ci interessano più delle esperienze elencate in un CV.</p>
+    <p>Le risposte vengono salvate automaticamente: puoi chiudere e riprendere dallo stesso dispositivo. Se il tuo profilo prosegue, le risposte che hai scritto qui saranno il punto di partenza dei passaggi successivi — quindi scrivi ciò che pensi davvero, non ciò che immagini vogliamo sentirci dire.</p>
+  </div>
+
+  <div class="campo" id="c-R0">
+    <label for="R0">Per quale area ti candidi?</label>
+    <select id="R0" data-salva>
+      <option value="">Seleziona…</option>
+      <option value="lettere">Secondaria di primo grado — Lettere (Italiano, Storia, Geografia)</option>
+      <option value="musica">Secondaria di primo grado — Musica</option>
+      <option value="matsci">Secondaria di primo grado — Matematica e Scienze</option>
+      <option value="primaria">Scuola primaria</option>
+      <option value="inglese">Inglese (primaria e secondaria)</option>
+    </select>
+    <div class="errore-msg">Seleziona l'area per cui ti candidi.</div>
+  </div>
+
+  <div class="campo" id="c-P1">
+    <span class="etichetta">I tuoi dati di contatto.</span>
+    <div class="riga">
+      <div><input type="text" id="P1_nome" placeholder="Nome" data-salva autocomplete="given-name"></div>
+      <div><input type="text" id="P1_cognome" placeholder="Cognome" data-salva autocomplete="family-name"></div>
+      <div><input type="email" id="P1_email" placeholder="Email" data-salva autocomplete="email"></div>
+      <div><input type="tel" id="P1_telefono" placeholder="Telefono" data-salva autocomplete="tel"></div>
+      <div><label for="P1_nascita" style="font-weight:400;font-size:13.5px;color:var(--grigio);margin-bottom:2px;">Data di nascita</label>
+        <input type="date" id="P1_nascita" data-salva></div>
+      <div><label for="P1_comune" style="font-weight:400;font-size:13.5px;color:var(--grigio);margin-bottom:2px;">Comune di residenza</label>
+        <input type="text" id="P1_comune" data-salva></div>
+    </div>
+    <div class="errore-msg">Compila tutti i dati di contatto (email valida inclusa).</div>
+  </div>
+
+  <div class="campo" id="c-P2">
+    <label for="P2_sede">Per quale sede saresti disponibile?</label>
+    <select id="P2_sede" data-salva>
+      <option value="">Seleziona…</option>
+      <option>Castelvenere (BN)</option>
+      <option>Caserta (CE)</option>
+      <option>Entrambe</option>
+    </select>
+    <div style="margin-top:14px;" class="scelte">
+      <span class="etichetta" style="font-weight:600;">Hai patente e auto propria?</span>
+      <label><input type="radio" name="P2_auto" value="Sì" data-salva> Sì</label>
+      <label><input type="radio" name="P2_auto" value="No" data-salva> No</label>
+    </div>
+    <div style="margin-top:14px;">
+      <label for="P2_percorrenza">Qual è il tempo di percorrenza che consideri sostenibile ogni giorno?</label>
+      <select id="P2_percorrenza" data-salva>
+        <option value="">Seleziona…</option>
+        <option>Fino a 15 minuti</option>
+        <option>Fino a 30 minuti</option>
+        <option>Fino a 45 minuti</option>
+        <option>Fino a un'ora</option>
+        <option>Oltre un'ora</option>
+      </select>
+    </div>
+    <div class="errore-msg">Rispondi alle tre domande su sede e mobilità.</div>
+  </div>
+
+  <div class="campo" id="c-P3">
+    <label for="P3_cv">Se vuoi, allega il tuo curriculum vitae. Non è obbligatorio: le domande che seguono ci dicono già quello che ci serve sapere.</label>
+    <input type="file" id="P3_cv" accept="application/pdf">
+    <div class="suggerimento">Solo PDF, massimo 5 MB. Il file viene inviato al termine del modulo.</div>
+    <div class="errore-msg">Il file deve essere un PDF di massimo 5 MB.</div>
+  </div>
+
+  <div class="campo scelte" id="c-P4">
+    <span class="etichetta">Ho letto l'<a href="privacy.html" target="_blank" rel="noopener">informativa sul trattamento dei miei dati personali</a>.</span>
+    <label><input type="checkbox" id="P4_sel" data-salva> Ho letto l'informativa sul trattamento dei dati personali e acconsento al trattamento dei miei dati per la gestione di questa selezione. <em>(obbligatorio)</em></label>
+    <label><input type="checkbox" id="P4_fut" data-salva> Acconsento alla conservazione della mia candidatura per 12 mesi, affinché br-ing possa contattarmi per future opportunità. Posso revocare questo consenso in qualsiasi momento. <em>(facoltativo)</em></label>
+    <div class="errore-msg">Il primo consenso è necessario per proseguire.</div>
+  </div>
+
+  <div class="avviso" id="avviso0"></div>
+  <div class="nav-step">
+    <span></span>
+    <button class="primario" id="btnStep0">Inizia la candidatura</button>
+  </div>
+</section>
+
+<!-- ============ STEP 1: SEZIONE A ============ -->
+<section class="step" data-step="1" data-nome="Il tuo profilo">
+  <div class="eyebrow">Sezione A</div>
+  <h2>Il tuo profilo</h2>
+
+  <div class="campo" id="c-A1">
+    <label for="A1_titolo">Qual è il tuo titolo di studio e, se pertinente, la classe di concorso o l'area disciplinare di riferimento?</label>
+    <select id="A1_titolo" data-salva>
+      <option value="">Seleziona…</option>
+      <option>Laurea magistrale</option>
+      <option>Laurea triennale</option>
+      <option>Scienze della Formazione Primaria</option>
+      <option>Diploma magistrale ante 2001-02</option>
+      <option>Conservatorio</option>
+      <option>Altro</option>
+    </select>
+    <input type="text" id="A1_dettaglio" data-salva style="margin-top:10px;"
+      placeholder="Denominazione esatta del titolo e, se pertinente, classe di concorso o area disciplinare">
+    <div class="errore-msg">Indica il titolo di studio e la denominazione esatta.</div>
+  </div>
+
+  <div class="campo" id="c-A2">
+    <span class="etichetta">Raccontaci dove hai insegnato. Aggiungi una voce per ogni esperienza significativa.</span>
+    <div id="A2_lista"></div>
+    <button type="button" class="btn-aggiungi" id="A2_add">+ Aggiungi un'esperienza</button>
+
+    <div class="scelte" style="margin-top:20px;">
+      <span class="etichetta" style="font-weight:600;">Ti è capitato di lavorare in uno di questi contesti?</span>
+      <label><input type="checkbox" name="A2_ctx" value="Pluriclasse o gruppi di età mista" data-salva> Pluriclasse o gruppi di età mista</label>
+      <label><input type="checkbox" name="A2_ctx" value="Classi molto piccole (meno di 10 studenti)" data-salva> Classi molto piccole (meno di 10 studenti)</label>
+      <label><input type="checkbox" name="A2_ctx" value="Doposcuola, recupero o supporto allo studio" data-salva> Doposcuola, recupero o supporto allo studio</label>
+      <label><input type="checkbox" name="A2_ctx" value="Contesti bilingui o CLIL" data-salva> Contesti bilingui o CLIL</label>
+      <label><input type="checkbox" name="A2_ctx" value="Studenti con DSA o BES" data-salva> Studenti con DSA o BES</label>
+      <label><input type="checkbox" name="A2_ctx" value="Ordini di scuola diversi da quello per cui mi candido" data-salva> Ordini di scuola diversi da quello per cui mi candido</label>
+      <label><input type="checkbox" name="A2_ctx" value="Nessuno di questi" data-salva> Nessuno di questi</label>
+    </div>
+  </div>
+
+  <div class="campo" id="c-A3">
+    <span class="etichetta">A che punto sei con l'abilitazione all'insegnamento?</span>
+    <div class="scelte">
+      <label><input type="radio" name="A3" value="conseguita" data-salva> L'ho conseguita</label>
+      <div id="A3_c1" style="display:none; padding:0 0 8px 28px;">
+        <input type="text" id="A3_conseguita_dett" data-salva placeholder="Quando e per quale classe di concorso?">
+      </div>
+      <label><input type="radio" name="A3" value="in_corso" data-salva> È in corso</label>
+      <div id="A3_c2" style="display:none; padding:0 0 8px 28px;">
+        <input type="text" id="A3_incorso_dett" data-salva placeholder="Presso quale ente, e quando prevedi di concluderla?">
+      </div>
+      <label><input type="radio" name="A3" value="intenzione" data-salva> Ho intenzione di iscrivermi</label>
+      <div id="A3_c3" style="display:none; padding:0 0 8px 28px;">
+        <input type="text" id="A3_intenzione_dett" data-salva placeholder="Entro quando?">
+      </div>
+      <label><input type="radio" name="A3" value="non_in_piani" data-salva> Non è nei miei piani al momento</label>
+    </div>
+    <div class="errore-msg">Seleziona una risposta e compila il dettaglio richiesto.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 2: SEZIONE B ============ -->
+<section class="step" data-step="2" data-nome="Il tuo percorso">
+  <div class="eyebrow">Sezione B</div>
+  <h2>Il tuo percorso</h2>
+
+  <div class="campo" id="c-B1">
+    <span class="etichetta">Hai seguito corsi di formazione negli ultimi 24 mesi, al di fuori di quelli obbligatori? Aggiungi una voce per ciascuno.</span>
+    <div id="B1_lista"></div>
+    <button type="button" class="btn-aggiungi" id="B1_add">+ Aggiungi un corso</button>
+    <div class="suggerimento">Se non hai seguito corsi in questo periodo, vai pure avanti.</div>
+  </div>
+
+  <div class="campo" id="c-B2">
+    <label for="B2">Come immagini il tuo percorso professionale nei prossimi tre anni?</label>
+    <textarea id="B2" rows="5" data-salva data-min="200"></textarea>
+    <div class="contatore" data-per="B2"></div>
+    <div class="errore-msg">Scrivi almeno 200 caratteri.</div>
+  </div>
+
+  <div class="campo" id="c-B3">
+    <label for="B3">Cosa ti interessa di una scuola paritaria bilingue con un approccio metacognitivo dichiarato, rispetto a una scuola statale? Rispondi anche se la risposta è pragmatica: le risposte oneste ci sono più utili di quelle diplomatiche.</label>
+    <textarea id="B3" rows="5" data-salva data-min="200"></textarea>
+    <div class="contatore" data-per="B3"></div>
+    <div class="errore-msg">Scrivi almeno 200 caratteri.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 3: SEZIONE C ============ -->
+<section class="step" data-step="3" data-nome="Come lavori">
+  <div class="eyebrow">Sezione C</div>
+  <h2>Come lavori</h2>
+  <div class="nota-sezione">Le prossime tre domande sono il cuore di questo form. Non cerchiamo la risposta 'giusta' secondo un manuale: ci interessa capire come progetti e come decidi. Se il tuo profilo prosegue, ne riparleremo insieme nel dettaglio.</div>
+
+  <div class="campo" id="c-C1">
+    <span class="etichetta">A ogni candidato assegniamo una diversa strategia di lavoro cognitivo, da declinare su un tema Global Perspectives. La tua è questa:</span>
+    <div class="carta-c1" id="cartaC1">
+      <div class="voce"><div class="k">Strategia</div>
+        <div class="v" id="c1_strategia">—</div>
+        <div class="def" id="c1_def"></div></div>
+      <div class="voce"><div class="k">Tema Global Perspectives</div>
+        <div class="v" id="c1_topic">—</div></div>
+      <div class="voce" style="margin-bottom:0;"><div class="k">Obiettivo di riferimento</div>
+        <div class="v" id="c1_gp">—</div></div>
+    </div>
+    <label for="C1">Descrivi un'attività concreta che useresti per far lavorare i tuoi studenti su questa strategia, all'interno di questo tema. Raccontaci soprattutto cosa fanno concretamente gli studenti, non cosa spieghi tu.</label>
+    <textarea id="C1" rows="9" data-salva data-min="400"></textarea>
+    <div class="contatore" data-per="C1"></div>
+    <div class="errore-msg">Scrivi almeno 400 caratteri.</div>
+  </div>
+
+  <div class="campo" id="c-C2">
+    <label for="C2">Uno studente partecipa attivamente in classe, ragiona bene ad alta voce e interviene in modo pertinente, ma va sistematicamente male nelle verifiche scritte. Come lo valuti a fine quadrimestre, e cosa fai nel frattempo?</label>
+    <textarea id="C2" rows="6" data-salva data-min="250"></textarea>
+    <div class="contatore" data-per="C2"></div>
+    <div class="errore-msg">Scrivi almeno 250 caratteri.</div>
+  </div>
+
+  <div class="campo" id="c-C3">
+    <label for="C3" id="C3_label"></label>
+    <textarea id="C3" rows="7" data-salva data-min="300"></textarea>
+    <div class="contatore" data-per="C3"></div>
+    <div class="errore-msg">Scrivi almeno 300 caratteri.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 4: SEZIONE D ============ -->
+<section class="step" data-step="4" data-nome="Come lavoriamo insieme">
+  <div class="eyebrow">Sezione D</div>
+  <h2>Come lavoriamo insieme</h2>
+  <div class="nota-sezione">A br-ing il lavoro del docente non finisce con le ore di lezione: c'è una parte di progettazione condivisa, coordinamento e formazione interna che fa parte del modo in cui la scuola funziona. Ti chiediamo qui di dirci con onestà quanto ti ci ritrovi. Non è un elenco di requisiti: 'da approfondire' è una risposta legittima e non penalizzante, e di tutto questo parleremo in modo completo e trasparente al colloquio.</div>
+
+  <div class="campo" id="c-D1">
+    <span class="etichetta">Saresti disponibile a…</span>
+    <table class="matrice">
+      <thead><tr><th></th><th>Sì</th><th>Da approfondire</th><th>No</th></tr></thead>
+      <tbody id="D1_body"></tbody>
+    </table>
+    <div class="errore-msg">Rispondi a tutte le righe.</div>
+  </div>
+
+  <div class="campo" id="c-D2" style="display:none;">
+    <label for="D2">Hai segnalato qualcosa da approfondire. Vuoi dirci cosa ti servirebbe sapere?</label>
+    <textarea id="D2" rows="4" data-salva></textarea>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 5: SEZIONE E ============ -->
+<section class="step" data-step="5" data-nome="Cosa porteresti">
+  <div class="eyebrow">Sezione E</div>
+  <h2>Cosa porteresti</h2>
+
+  <div class="campo" id="c-E1">
+    <label for="E1">Immagina di poter attivare un laboratorio pomeridiano a br-ing, portato avanti da te. Descrivicelo in cinque righe: cosa fanno i ragazzi, con che frequenza, e cosa dovrebbero saper fare alla fine che prima non sapevano fare.</label>
+    <textarea id="E1" rows="6" data-salva data-min="250"></textarea>
+    <div class="contatore" data-per="E1"></div>
+    <div class="errore-msg">Scrivi almeno 250 caratteri.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 6: SEZIONE F ============ -->
+<section class="step" data-step="6" data-nome="Inglese e strumenti">
+  <div class="eyebrow">Sezione F</div>
+  <h2>Inglese e strumenti</h2>
+
+  <div class="campo" id="c-F1">
+    <label for="F1_livello">Qual è il tuo livello di inglese secondo il Quadro Comune Europeo? Se hai certificazioni, indicale.</label>
+    <select id="F1_livello" data-salva>
+      <option value="">Seleziona…</option>
+      <option>A1</option><option>A2</option><option>B1</option>
+      <option>B2</option><option>C1</option><option>C2</option>
+    </select>
+    <div id="F1_lista" style="margin-top:12px;"></div>
+    <button type="button" class="btn-aggiungi" id="F1_add" style="margin-top:4px;">+ Aggiungi una certificazione</button>
+    <div class="errore-msg">Indica il tuo livello di inglese.</div>
+  </div>
+
+  <div class="campo" id="c-F2">
+    <label for="F2">Describe a lesson you are proud of, and explain why. Please answer in English.</label>
+    <textarea id="F2" rows="7" data-salva data-min="300"></textarea>
+    <div class="contatore" data-per="F2"></div>
+    <div class="errore-msg">Please write at least 300 characters, in English.</div>
+  </div>
+
+  <div class="campo" id="c-F3">
+    <div class="scelte">
+      <span class="etichetta" style="font-weight:600;">Quali registri elettronici hai utilizzato?</span>
+      <label><input type="checkbox" name="F3_reg" value="Mastercom" data-salva> Mastercom</label>
+      <label><input type="checkbox" name="F3_reg" value="Argo" data-salva> Argo</label>
+      <label><input type="checkbox" name="F3_reg" value="Classeviva/Spaggiari" data-salva> Classeviva/Spaggiari</label>
+      <label><input type="checkbox" name="F3_reg" value="Nuvola" data-salva> Nuvola</label>
+      <label><input type="checkbox" name="F3_reg" value="Axios" data-salva> Axios</label>
+      <label><input type="checkbox" name="F3_reg" value="Altro" data-salva> Altro</label>
+      <label><input type="checkbox" name="F3_reg" value="Nessuno" data-salva> Nessuno</label>
+    </div>
+    <div style="margin-top:14px;">
+      <label for="F3_uso">Al di là dei voti, cosa ci registri abitualmente?</label>
+      <textarea id="F3_uso" rows="3" data-salva></textarea>
+    </div>
+    <div class="scelte" style="margin-top:14px;">
+      <span class="etichetta" style="font-weight:600;">Saresti disponibile a seguire formazione in modalità asincrona online?</span>
+      <label><input type="radio" name="F3_async" value="Sì" data-salva> Sì</label>
+      <label><input type="radio" name="F3_async" value="No" data-salva> No</label>
+    </div>
+    <div class="errore-msg">Completa le tre risposte di questa domanda.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 7: SEZIONE G (solo ENG) ============ -->
+<section class="step" data-step="7" data-nome="Primaria e secondaria" data-solo-eng>
+  <div class="eyebrow">Sezione G</div>
+  <h2>Tra primaria e secondaria</h2>
+
+  <div class="campo" id="c-G1">
+    <label for="G1">Il profilo per cui ti candidi lavora sia con bambini della primaria sia con preadolescenti della secondaria. Raccontaci un'esperienza di insegnamento della lingua con bambini e una con ragazzi più grandi: cosa hai cambiato concretamente nel tuo modo di lavorare passando dagli uni agli altri?
+
+Se hai lavorato con una sola fascia d'età, dicci pure che è così e raccontaci cosa immagini cambierebbe.</label>
+    <textarea id="G1" rows="9" data-salva data-min="300"></textarea>
+    <div class="contatore" data-per="G1"></div>
+    <div class="errore-msg">Scrivi almeno 300 caratteri.</div>
+  </div>
+
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" data-avanti>Continua</button>
+  </div>
+</section>
+
+<!-- ============ STEP 8: RIEPILOGO E INVIO ============ -->
+<section class="step" data-step="8" data-nome="Invio">
+  <div class="eyebrow">Ultimo passo</div>
+  <h2>Invia la tua candidatura</h2>
+  <p style="margin-bottom:18px;">Controlla di aver detto quello che volevi dire — puoi tornare indietro su ogni sezione. Quando invii, le risposte arrivano a noi così come sono.</p>
+  <div class="avviso" id="avvisoInvio"></div>
+  <div class="nav-step">
+    <button class="secondario" data-indietro>Indietro</button>
+    <button class="primario" id="btnInvia">Invia la candidatura</button>
+  </div>
+</section>
+
+<!-- ============ STEP 9: CHIUSURA ============ -->
+<section class="step" data-step="9" data-nome="Grazie">
+  <div class="fine prosa">
+    <div class="sigillo">✓</div>
+    <h2>Abbiamo finito.</h2>
+    <p>Grazie per il tempo che ci hai dedicato — sappiamo che è stato più di quello di una candidatura ordinaria, ed è voluto: preferiamo chiedere molto a pochi passaggi piuttosto che poco a molti.</p>
+    <p>Leggiamo tutte le risposte una per una. Ti ricontatteremo entro 5 giorni in ogni caso, anche se il percorso non prosegue.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  br-ingMeAPP S.r.l. · Via San Tommaso snc, 82037 Castelvenere (BN) · P.IVA 01663490629 ·
+  <a href="privacy.html">Informativa privacy</a> · bringscuolabilingue@gmail.com
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  var CHIAVE = "bring_s1_v1";
+  var stato = leggi();
+
+  function leggi(){ try{ return JSON.parse(localStorage.getItem(CHIAVE)) || {}; }catch(e){ return {}; } }
+  function scrivi(){ try{ localStorage.setItem(CHIAVE, JSON.stringify(stato)); }catch(e){} }
+
+  // ---------- autosalvataggio ----------
+  function agganciaSalvataggio(root){
+    (root||document).querySelectorAll("[data-salva]").forEach(function(el){
+      var ev = (el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT") ? "change" : "input";
+      el.addEventListener(ev, function(){ salvaCampo(el); });
+    });
+  }
+  function chiaveDi(el){
+    if(el.type==="radio") return "r_"+el.name;
+    if(el.type==="checkbox" && el.name) return "ck_"+el.name+"__"+el.value;
+    return el.id;
+  }
+  function salvaCampo(el){
+    var k = chiaveDi(el);
+    if(el.type==="checkbox") stato[k] = el.checked;
+    else if(el.type==="radio"){ if(el.checked) stato[k] = el.value; }
+    else stato[k] = el.value;
+    scrivi();
+    if(el.tagName==="TEXTAREA") aggiornaContatore(el);
+    if(el.name==="A3") mostraCondA3();
+    if(el.name && el.name.indexOf("D1_")===0) mostraD2();
+  }
+  function ripristina(){
+    document.querySelectorAll("[data-salva]").forEach(function(el){
+      var k = chiaveDi(el);
+      if(!(k in stato)) return;
+      if(el.type==="checkbox") el.checked = !!stato[k];
+      else if(el.type==="radio") el.checked = (stato[k]===el.value);
+      else el.value = stato[k];
+      if(el.tagName==="TEXTAREA") aggiornaContatore(el);
+    });
+  }
+
+  // ---------- contatori caratteri ----------
+  function aggiornaContatore(ta){
+    var c = document.querySelector('.contatore[data-per="'+ta.id+'"]');
+    if(!c) return;
+    var min = parseInt(ta.dataset.min||"0",10);
+    var n = ta.value.trim().length;
+    c.textContent = n + (min? " / minimo "+min+" caratteri" : " caratteri");
+    c.classList.toggle("ok", min>0 && n>=min);
+  }
+
+  // ---------- repeaters ----------
+  function repeater(listaId, addId, statoKey, campi){
+    var lista = document.getElementById(listaId);
+    function render(){
+      lista.innerHTML = "";
+      (stato[statoKey]||[]).forEach(function(voce,i){
+        var div = document.createElement("div");
+        div.className = "rep-item";
+        div.innerHTML = '<button type="button" class="togli">rimuovi</button>' +
+          '<div class="riga">' + campi.map(function(f){
+            if(f.tipo==="select"){
+              return '<div><select data-i="'+i+'" data-f="'+f.k+'"><option value="">'+f.ph+'…</option>' +
+                f.opzioni.map(function(o){return '<option'+(voce[f.k]===o?' selected':'')+'>'+o+'</option>';}).join("") +
+                '</select></div>';
+            }
+            return '<div><input type="text" data-i="'+i+'" data-f="'+f.k+'" placeholder="'+f.ph+'" value="'+(voce[f.k]||"").replace(/"/g,"&quot;")+'"></div>';
+          }).join("") + '</div>';
+        div.querySelector(".togli").addEventListener("click", function(){
+          stato[statoKey].splice(i,1); scrivi(); render();
+        });
+        div.querySelectorAll("input,select").forEach(function(inp){
+          inp.addEventListener("input", function(){
+            stato[statoKey][+inp.dataset.i][inp.dataset.f] = inp.value; scrivi();
+          });
+        });
+        lista.appendChild(div);
+      });
+    }
+    document.getElementById(addId).addEventListener("click", function(){
+      stato[statoKey] = stato[statoKey]||[]; stato[statoKey].push({}); scrivi(); render();
+    });
+    render();
+  }
+  repeater("A2_lista","A2_add","A2_esperienze",[
+    {k:"ordine", tipo:"select", ph:"Ordine di scuola", opzioni:["Infanzia","Primaria","Secondaria I grado","Secondaria II grado","Altro"]},
+    {k:"tipo",   tipo:"select", ph:"Tipo di scuola",   opzioni:["Statale","Paritaria","Privata non paritaria","Estero","Altro"]},
+    {k:"anni",   ph:"Anni (es. 2021-2024)"},
+    {k:"ruolo",  ph:"Materia o ruolo"}
+  ]);
+  repeater("B1_lista","B1_add","B1_corsi",[
+    {k:"titolo", ph:"Titolo del corso"},
+    {k:"ente",   ph:"Ente"},
+    {k:"ore",    ph:"Ore indicative"},
+    {k:"fin",    tipo:"select", ph:"Chi lo ha finanziato", opzioni:["La scuola in cui lavoravo","Me lo sono pagato io","Era gratuito","Carta del docente"]}
+  ]);
+  repeater("F1_lista","F1_add","F1_cert",[
+    {k:"cert", ph:"Certificazione (es. CAE)"},
+    {k:"ente", ph:"Ente"},
+    {k:"anno", ph:"Anno"}
+  ]);
+
+  // ---------- matrice D1 ----------
+  var D1_voci = [
+    "partecipare a incontri di coordinamento regolari durante l'anno",
+    "seguire percorsi di formazione interna alla scuola",
+    "assumere un ruolo di riferimento per una classe",
+    "tenere attività in orario pomeridiano",
+    "aprire la tua classe all'osservazione di colleghi, e osservare la loro",
+    "dedicare tempo alla progettazione in periodi non di lezione"
+  ];
+  var d1b = document.getElementById("D1_body");
+  D1_voci.forEach(function(v,i){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+v+"</td>" + ["Sì","Da approfondire","No"].map(function(o){
+      return '<td><input type="radio" name="D1_'+i+'" value="'+o+'" data-salva aria-label="'+o+'"></td>';
+    }).join("");
+    d1b.appendChild(tr);
+  });
+  function mostraD2(){
+    var almeno = D1_voci.some(function(_,i){ return stato["r_D1_"+i]==="Da approfondire"; });
+    document.getElementById("c-D2").style.display = almeno ? "" : "none";
+  }
+
+  // ---------- condizionali A3 ----------
+  function mostraCondA3(){
+    var v = stato["r_A3"];
+    document.getElementById("A3_c1").style.display = v==="conseguita" ? "" : "none";
+    document.getElementById("A3_c2").style.display = v==="in_corso"   ? "" : "none";
+    document.getElementById("A3_c3").style.display = v==="intenzione" ? "" : "none";
+  }
+
+  // ---------- variante C3 per area ----------
+  var C3_SEC = "Nella tua classe hai tre studenti che raggiungono gli obiettivi rapidamente e lavorano bene in autonomia, e due che stanno ancora consolidando i prerequisiti necessari per affrontare l'argomento del giorno. Descrivi concretamente come organizzi una tua lezione tipo: cosa succede, chi fa cosa, in che ordine.";
+  var C3_PRI = "In una classe prima hai due bambini che leggono già correntemente e tre che non hanno ancora automatizzato il riconoscimento delle lettere. Descrivi concretamente come organizzi una tua attività tipo: cosa succede, chi fa cosa, in che ordine.";
+  function applicaArea(){
+    var area = stato["R0"]||"";
+    document.getElementById("C3_label").textContent = (area==="primaria") ? C3_PRI : C3_SEC;
+  }
+
+  // ---------- carta C1 ----------
+  function mostraCombo(c){
+    document.getElementById("c1_strategia").textContent = c.strategia;
+    document.getElementById("c1_def").textContent = c.definizione_operativa;
+    document.getElementById("c1_topic").textContent = c.topic;
+    document.getElementById("c1_gp").textContent = c.obiettivo_gp;
+  }
+  if(stato._combo) mostraCombo(stato._combo);
+
+  // ---------- navigazione step ----------
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+  var corrente = Math.min(stato._step||0, steps.length-1);
+  function stepVisibili(){
+    var eng = stato["R0"]==="inglese";
+    return steps.filter(function(s){ return eng || !s.hasAttribute("data-solo-eng"); });
+  }
+  function vai(n){
+    var vis = stepVisibili();
+    n = Math.max(0, Math.min(n, vis.length-1));
+    steps.forEach(function(s){ s.classList.remove("attivo"); });
+    vis[n].classList.add("attivo");
+    corrente = n; stato._step = n; scrivi();
+    var pct = Math.round(n/(vis.length-1)*100);
+    document.getElementById("railBar").style.width = pct+"%";
+    document.getElementById("railLabel").textContent =
+      (n===0 ? "Candidatura docenti · AS 2026/27" : vis[n].dataset.nome + " · passo "+(n+1)+" di "+vis.length);
+    window.scrollTo({top:0});
+  }
+
+  document.querySelectorAll("[data-avanti]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var vis = stepVisibili();
+      if(!validaStep(vis[corrente])) return;
+      vai(corrente+1);
+    });
+  });
+  document.querySelectorAll("[data-indietro]").forEach(function(b){
+    b.addEventListener("click", function(){ vai(corrente-1); });
+  });
+
+  // ---------- validazione ----------
+  function segna(id, ko){
+    var c = document.getElementById(id);
+    if(c) c.classList.toggle("invalido", !!ko);
+    return !ko;
+  }
+  function okMin(id){
+    var ta = document.getElementById(id);
+    return ta.value.trim().length >= parseInt(ta.dataset.min||"0",10);
+  }
+  function validaStep(sec){
+    var n = +sec.dataset.step, ok = true;
+    if(n===1){
+      ok = segna("c-A1", !(val("A1_titolo") && val("A1_dettaglio"))) && ok;
+      var a3 = stato["r_A3"];
+      var det = {conseguita:"A3_conseguita_dett", in_corso:"A3_incorso_dett", intenzione:"A3_intenzione_dett"};
+      ok = segna("c-A3", !a3 || (det[a3] && !val(det[a3]))) && ok;
+    }
+    if(n===2){
+      ok = segna("c-B2", !okMin("B2")) && ok;
+      ok = segna("c-B3", !okMin("B3")) && ok;
+    }
+    if(n===3){
+      ok = segna("c-C1", !okMin("C1")) && ok;
+      ok = segna("c-C2", !okMin("C2")) && ok;
+      ok = segna("c-C3", !okMin("C3")) && ok;
+    }
+    if(n===4){
+      var tutte = D1_voci.every(function(_,i){ return !!stato["r_D1_"+i]; });
+      ok = segna("c-D1", !tutte) && ok;
+    }
+    if(n===5){ ok = segna("c-E1", !okMin("E1")) && ok; }
+    if(n===6){
+      ok = segna("c-F1", !val("F1_livello")) && ok;
+      ok = segna("c-F2", !okMin("F2")) && ok;
+      ok = segna("c-F3", !(stato["r_F3_async"])) && ok;
+    }
+    if(n===7){ ok = segna("c-G1", !okMin("G1")) && ok; }
+    if(!ok){
+      var primo = sec.querySelector(".campo.invalido");
+      if(primo) primo.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+    return ok;
+  }
+  function val(id){ var e=document.getElementById(id); return e && e.value.trim(); }
+
+  // ---------- step 0: consensi + assegnazione C1 ----------
+  document.getElementById("btnStep0").addEventListener("click", async function(){
+    var ok = true;
+    ok = segna("c-R0", !val("R0")) && ok;
+    var emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val("P1_email")||"");
+    ok = segna("c-P1", !(val("P1_nome")&&val("P1_cognome")&&emailOk&&val("P1_telefono")&&val("P1_nascita")&&val("P1_comune"))) && ok;
+    ok = segna("c-P2", !(val("P2_sede") && stato["r_P2_auto"] && val("P2_percorrenza"))) && ok;
+    var f = document.getElementById("P3_cv").files[0];
+    var cvKo = f && (f.type!=="application/pdf" || f.size>5*1024*1024);
+    ok = segna("c-P3", cvKo) && ok;
+    ok = segna("c-P4", !document.getElementById("P4_sel").checked) && ok;
+    if(!ok) return;
+
+    var btn = this; btn.disabled = true; btn.textContent = "Un momento…";
+    var avviso = document.getElementById("avviso0"); avviso.style.display="none";
+    try{
+      var res = await sb.rpc("assign_c1", {
+        p_email: val("P1_email"),
+        p_area: val("R0"),
+        p_profile: {
+          nome: val("P1_nome"), cognome: val("P1_cognome"),
+          telefono: val("P1_telefono"), data_nascita: val("P1_nascita"),
+          comune: val("P1_comune"), sede: val("P2_sede"),
+          auto: stato["r_P2_auto"], percorrenza: val("P2_percorrenza"),
+          consenso_selezione: true,
+          consenso_futuro: document.getElementById("P4_fut").checked
+        }
+      });
+      if(res.error) throw res.error;
+      stato._combo = res.data; stato._candidate_id = res.data.candidate_id;
+      scrivi(); mostraCombo(res.data); applicaArea(); vai(1);
+    }catch(e){
+      avviso.textContent = "Non siamo riusciti a salvare i tuoi dati. Controlla la connessione e riprova; se il problema persiste scrivici a bringscuolabilingue@gmail.com.";
+      avviso.style.display = "block";
+      console.error(e);
+    }finally{
+      btn.disabled = false; btn.textContent = "Inizia la candidatura";
+    }
+  });
+
+  // ---------- invio finale ----------
+  document.getElementById("btnInvia").addEventListener("click", async function(){
+    var btn = this; btn.disabled = true; btn.textContent = "Invio in corso…";
+    var avviso = document.getElementById("avvisoInvio"); avviso.style.display="none";
+    try{
+      var cvPath = null;
+      var f = document.getElementById("P3_cv").files[0];
+      if(f){
+        cvPath = stato._candidate_id + "/cv.pdf";
+        var up = await sb.storage.from("cv").upload(cvPath, f, {upsert:true, contentType:"application/pdf"});
+        if(up.error) throw up.error;
+      }
+      var answers = raccogli();
+      var res = await sb.rpc("submit_stage1", {
+        p_candidate_id: stato._candidate_id,
+        p_email: val("P1_email") || (stato["P1_email"]||""),
+        p_answers: answers,
+        p_cv_path: cvPath
+      });
+      if(res.error) throw res.error;
+      stato._inviata = true; scrivi();
+      vai(stepVisibili().length-1);
+    }catch(e){
+      avviso.textContent = "L'invio non è andato a buon fine. Le tue risposte sono al sicuro su questo dispositivo: riprova tra qualche minuto o scrivici a bringscuolabilingue@gmail.com.";
+      avviso.style.display = "block";
+      console.error(e);
+      btn.disabled = false; btn.textContent = "Invia la candidatura";
+    }
+  });
+
+  function elenco(nome){
+    var out = [];
+    document.querySelectorAll('input[name="'+nome+'"]:checked').forEach(function(c){ out.push(c.value); });
+    return out;
+  }
+  function raccogli(){
+    return {
+      A1: {titolo: val("A1_titolo"), dettaglio: val("A1_dettaglio")},
+      A2: {esperienze: stato.A2_esperienze||[], contesti: elenco("A2_ctx")},
+      A3: {stato: stato["r_A3"]||"",
+           dettaglio: val("A3_conseguita_dett")||val("A3_incorso_dett")||val("A3_intenzione_dett")||""},
+      B1: {corsi: stato.B1_corsi||[]},
+      B2: val("B2"), B3: val("B3"),
+      C1: {combo: (stato._combo||{}).combo, testo: val("C1")},
+      C2: val("C2"),
+      C3: {variante: (stato["R0"]==="primaria")?"PRI":"SEC/ENG", testo: val("C3")},
+      D1: D1_voci.map(function(v,i){ return {voce:v, risposta:stato["r_D1_"+i]||""}; }),
+      D2: val("D2"),
+      E1: val("E1"),
+      F1: {livello: val("F1_livello"), certificazioni: stato.F1_cert||[]},
+      F2: val("F2"),
+      F3: {registri: elenco("F3_reg"), uso: val("F3_uso"), asincrona: stato["r_F3_async"]||""},
+      G1: (stato["R0"]==="inglese") ? val("G1") : null
+    };
+  }
+
+  // ---------- avvio ----------
+  agganciaSalvataggio(document);
+  ripristina();
+  mostraCondA3(); mostraD2(); applicaArea();
+  document.querySelectorAll("textarea[data-salva]").forEach(aggiornaContatore);
+  if(stato._inviata){ vai(stepVisibili().length-1); }
+  else if(stato._combo && corrente>0){ vai(corrente); }
+  else { vai(0); }
+})();
+</script>
+</body>
+</html>

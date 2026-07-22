@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backoffice selezione — br-ing</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bosco:#1E3D2F;--salvia:#6B8577;--oro:#C9A227;--carta:#F7F5EF;--bianco:#fff;
+        --inchiostro:#24291F;--grigio:#6E7268;--linea:#DDD8C9;--errore:#A63D2F;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.55;
+       color:var(--inchiostro);background:var(--carta);}
+  header{background:var(--bosco);color:var(--carta);padding:16px 20px;
+         display:flex;justify-content:space-between;align-items:center;}
+  .wordmark{font-family:'Fraunces',serif;font-weight:600;font-size:20px;}
+  .wordmark span{color:var(--oro);}
+  main{max-width:1100px;margin:0 auto;padding:26px 20px 80px;}
+  h1{font-family:'Fraunces',serif;color:var(--bosco);font-size:23px;margin-bottom:16px;}
+  input,select,textarea,button{font:inherit;}
+  input,select,textarea{padding:9px 11px;border:1px solid var(--linea);border-radius:6px;background:var(--bianco);}
+  button{padding:9px 16px;border-radius:6px;border:none;background:var(--bosco);color:var(--carta);
+         font-weight:600;cursor:pointer;}
+  button.ghost{background:none;color:var(--bosco);border:1px solid var(--linea);}
+  .login{max-width:380px;margin:60px auto;background:var(--bianco);border:1px solid var(--linea);
+         border-radius:10px;padding:26px;display:flex;flex-direction:column;gap:12px;}
+  .filtri{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;background:var(--bianco);border:1px solid var(--linea);}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--linea);text-align:left;font-size:14px;}
+  th{background:#EFEDE3;}
+  tr.riga-cand{cursor:pointer;}
+  tr.riga-cand:hover{background:#F2F4EC;}
+  .stato{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12.5px;font-weight:600;}
+  .st-inviata{background:#E4EFDF;color:var(--bosco);}
+  .st-in_compilazione{background:#F4EBD3;color:#7A6217;}
+  .dettaglio{background:var(--bianco);border:1px solid var(--linea);border-radius:10px;
+             padding:22px;margin-top:20px;display:none;}
+  .dettaglio h2{font-family:'Fraunces',serif;color:var(--bosco);font-size:19px;margin-bottom:6px;}
+  .meta{color:var(--grigio);font-size:13.5px;margin-bottom:14px;}
+  .blocco{margin:14px 0;padding:12px 14px;background:var(--carta);border-radius:8px;}
+  .blocco .k{font-size:12px;letter-spacing:.07em;text-transform:uppercase;
+             color:var(--salvia);font-weight:600;margin-bottom:4px;}
+  .blocco pre{white-space:pre-wrap;font:inherit;}
+  .combo{border-left:4px solid var(--oro);}
+  .msg{margin:10px 0;color:var(--errore);}
+  .ok{color:var(--bosco);}
+  .override{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="wordmark">br-ing<span>.</span> · backoffice selezione</div>
+  <button class="ghost" id="btnLogout" style="display:none;color:var(--carta);border-color:#41604F;">Esci</button>
+</header>
+<main>
+
+<div class="login" id="login">
+  <h1>Accesso team</h1>
+  <input type="email" id="lg_email" placeholder="Email" autocomplete="username">
+  <input type="password" id="lg_pass" placeholder="Password" autocomplete="current-password">
+  <button id="btnLogin">Entra</button>
+  <div class="msg" id="lg_msg"></div>
+</div>
+
+<div id="app" style="display:none;">
+  <h1>Candidature — Stadio 1</h1>
+  <div class="filtri">
+    <select id="f_area">
+      <option value="">Tutte le aree</option>
+      <option value="lettere">Lettere</option>
+      <option value="musica">Musica</option>
+      <option value="matsci">Matematica e Scienze</option>
+      <option value="primaria">Primaria</option>
+      <option value="inglese">Inglese</option>
+    </select>
+    <select id="f_stato">
+      <option value="">Tutti gli stati</option>
+      <option value="inviata">Inviata</option>
+      <option value="in_compilazione">In compilazione</option>
+    </select>
+    <button class="ghost" id="btnRicarica">Aggiorna</button>
+    <button class="ghost" id="btnCsv">Esporta CSV</button>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Candidato</th><th>Area</th><th>Sede</th><th>Combinazione C1</th>
+      <th>Stato</th><th>Inviata il</th><th>CV</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div class="dettaglio" id="dettaglio"></div>
+</div>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  var AREE = {lettere:"Lettere", musica:"Musica", matsci:"Mat-Scienze", primaria:"Primaria", inglese:"Inglese"};
+  var cache = [], pool = [];
+
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  async function avvia(){
+    var s = await sb.auth.getSession();
+    mostra(!!(s.data && s.data.session));
+  }
+  function mostra(loggato){
+    el("login").style.display = loggato ? "none" : "";
+    el("app").style.display = loggato ? "" : "none";
+    el("btnLogout").style.display = loggato ? "" : "none";
+    if(loggato){ caricaPool(); carica(); }
+  }
+
+  el("btnLogin").addEventListener("click", async function(){
+    el("lg_msg").textContent = "";
+    var r = await sb.auth.signInWithPassword({email: el("lg_email").value, password: el("lg_pass").value});
+    if(r.error){ el("lg_msg").textContent = "Accesso non riuscito: " + r.error.message; return; }
+    mostra(true);
+  });
+  el("btnLogout").addEventListener("click", async function(){
+    await sb.auth.signOut(); mostra(false);
+  });
+
+  async function caricaPool(){
+    var r = await sb.from("c1_pool").select("*").order("id");
+    if(!r.error) pool = r.data;
+  }
+
+  async function carica(){
+    var q = sb.from("candidates").select("*").order("created_at", {ascending:false});
+    if(el("f_area").value) q = q.eq("area", el("f_area").value);
+    if(el("f_stato").value) q = q.eq("status", el("f_stato").value);
+    var r = await q;
+    if(r.error){ alert("Errore di caricamento: "+r.error.message); return; }
+    cache = r.data;
+    var tb = el("tbody"); tb.innerHTML = "";
+    cache.forEach(function(c){
+      var tr = document.createElement("tr");
+      tr.className = "riga-cand";
+      tr.innerHTML =
+        "<td><strong>"+esc(c.cognome)+" "+esc(c.nome)+"</strong><br><span style='color:var(--grigio);font-size:12.5px;'>"+esc(c.email)+"</span></td>"+
+        "<td>"+(AREE[c.area]||esc(c.area))+"</td>"+
+        "<td>"+esc(c.sede||"—")+"</td>"+
+        "<td>"+esc(c.c1_combo||"—")+"</td>"+
+        "<td><span class='stato st-"+esc(c.status)+"'>"+esc(c.status.replace(/_/g," "))+"</span></td>"+
+        "<td>"+(c.submitted_at ? new Date(c.submitted_at).toLocaleString("it-IT") : "—")+"</td>"+
+        "<td>"+(c.cv_path ? "PDF" : "—")+"</td>";
+      tr.addEventListener("click", function(){ dettaglio(c); });
+      tb.appendChild(tr);
+    });
+  }
+  el("btnRicarica").addEventListener("click", carica);
+  el("f_area").addEventListener("change", carica);
+  el("f_stato").addEventListener("change", carica);
+
+  function blocco(k, v){
+    return "<div class='blocco'><div class='k'>"+esc(k)+"</div><pre>"+esc(v)+"</pre></div>";
+  }
+  function j(v){ return v==null ? "—" : (typeof v==="string" ? v : JSON.stringify(v, null, 2)); }
+
+  async function dettaglio(c){
+    var d = el("dettaglio");
+    var combo = pool.find(function(p){ return p.id===c.c1_combo; }) || {};
+    var a = c.stage1_answers || {};
+    var html =
+      "<h2>"+esc(c.cognome)+" "+esc(c.nome)+"</h2>"+
+      "<div class='meta'>"+(AREE[c.area]||"")+" · "+esc(c.email)+" · "+esc(c.telefono||"")+
+      " · "+esc(c.comune||"")+" · Sede: "+esc(c.sede||"—")+" · Auto: "+esc(c.auto_propria||"—")+
+      " · Percorrenza: "+esc(c.percorrenza||"—")+
+      " · Consenso futuro: "+(c.consenso_futuro?"sì":"no")+"</div>";
+
+    html += "<div class='blocco combo'><div class='k'>Combinazione C1 · "+esc(c.c1_combo||"—")+"</div>"+
+      "<pre>"+esc((combo.strategia||"")+" — "+(combo.definizione_operativa||"")+"\nTema: "+(combo.topic||"")+" · "+(combo.obiettivo_gp||""))+"</pre>"+
+      "<div class='override'>"+
+        "<select id='ov_combo'>"+ pool.filter(function(p){return (p.aree||[]).indexOf(c.area)>=0;})
+          .map(function(p){return "<option value='"+p.id+"'"+(p.id===c.c1_combo?" selected":"")+">"+p.id+" · "+esc(p.strategia)+" · "+esc(p.topic)+"</option>";}).join("") +
+        "</select>"+
+        "<input type='text' id='ov_motivo' placeholder='Motivo dell&#39;override'>"+
+        "<button class='ghost' id='ov_btn'>Forza combinazione</button>"+
+        "<span id='ov_msg'></span>"+
+      "</div></div>";
+
+    if(c.cv_path) html += "<p><button class='ghost' id='btnCv'>Scarica CV</button></p>";
+
+    if(a && Object.keys(a).length){
+      html += blocco("A1 · Titolo di studio", j(a.A1));
+      html += blocco("A2 · Esperienze e contesti", j(a.A2));
+      html += blocco("A3 · Abilitazione", j(a.A3));
+      html += blocco("B1 · Formazione ultimi 24 mesi", j(a.B1));
+      html += blocco("B2 · Percorso a tre anni", j(a.B2));
+      html += blocco("B3 · Perché una paritaria bilingue metacognitiva", j(a.B3));
+      html += blocco("C1 · Attività sulla strategia assegnata", j(a.C1 && a.C1.testo));
+      html += blocco("C2 · Valutazione formativa/sommativa", j(a.C2));
+      html += blocco("C3 · Gestione livelli in classe ("+esc((a.C3||{}).variante||"")+")", j(a.C3 && a.C3.testo));
+      html += blocco("D1 · Disponibilità", (a.D1||[]).map(function(x){return x.risposta+" — "+x.voce;}).join("\n") || "—");
+      if(a.D2) html += blocco("D2 · Cosa vorrebbe approfondire", j(a.D2));
+      html += blocco("E1 · Laboratorio pomeridiano proposto", j(a.E1));
+      html += blocco("F1 · Inglese", j(a.F1));
+      html += blocco("F2 · Lesson you are proud of (EN)", j(a.F2));
+      html += blocco("F3 · Registro elettronico", j(a.F3));
+      if(a.G1) html += blocco("G1 · Primaria e secondaria (profilo ENG)", j(a.G1));
+    } else {
+      html += "<p style='color:var(--grigio);'>Candidatura non ancora inviata: sono disponibili solo i dati della Sezione 0.</p>";
+    }
+    d.innerHTML = html; d.style.display = "block";
+    d.scrollIntoView({behavior:"smooth"});
+
+    if(c.cv_path){
+      el("btnCv").addEventListener("click", async function(){
+        var r = await sb.storage.from("cv").createSignedUrl(c.cv_path, 300);
+        if(r.error){ alert("Errore CV: "+r.error.message); return; }
+        window.open(r.data.signedUrl, "_blank");
+      });
+    }
+    el("ov_btn").addEventListener("click", async function(){
+      var m = el("ov_motivo").value.trim();
+      if(!m){ el("ov_msg").textContent = "Indica il motivo."; return; }
+      var r = await sb.rpc("admin_override_c1", {
+        p_candidate_id: c.id, p_new_combo: el("ov_combo").value, p_motivo: m
+      });
+      if(r.error){ el("ov_msg").textContent = "Errore: "+r.error.message; return; }
+      el("ov_msg").innerHTML = "<span class='ok'>Registrato.</span>";
+      carica();
+    });
+  }
+
+  el("btnCsv").addEventListener("click", function(){
+    var righe = [["cognome","nome","email","area","sede","combo","stato","inviata_il"]];
+    cache.forEach(function(c){
+      righe.push([c.cognome,c.nome,c.email,AREE[c.area]||c.area,c.sede||"",c.c1_combo||"",c.status,
+                  c.submitted_at?new Date(c.submitted_at).toISOString():""]);
+    });
+    var csv = righe.map(function(r){ return r.map(function(v){
+      return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "candidature_stadio1.csv"; a.click();
+  });
+
+  avvia();
+})();
+</script>
+</body>
+</html>

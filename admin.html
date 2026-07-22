@@ -202,10 +202,10 @@
       html += blocco("D1 · Disponibilità", (a.D1||[]).map(function(x){return x.risposta+" — "+x.voce;}).join("\n") || "—");
       if(a.D2) html += blocco("D2 · Cosa vorrebbe approfondire", j(a.D2));
       html += blocco("E1 · Laboratorio pomeridiano proposto", j(a.E1));
-      html += blocco("F1 · Inglese", j(a.F1));
-      html += blocco("F2 · Lesson you are proud of (EN)", j(a.F2));
-      html += blocco("F3 · Registro elettronico", j(a.F3));
+      html += blocco("Inglese · livello e certificazioni", j(a.lingua));
+      html += blocco("F · Registro elettronico e formazione asincrona", j(a.F3));
       if(a.G1) html += blocco("G1 · Primaria e secondaria (profilo ENG)", j(a.G1));
+      if(a.ENGP) html += blocco("EN · Lesson you are proud of (profilo ENG)", j(a.ENGP));
     } else {
       html += "<p style='color:var(--grigio);'>Candidatura non ancora inviata: sono disponibili solo i dati della Sezione 0.</p>";
     }

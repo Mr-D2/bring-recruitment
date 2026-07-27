@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>br-ing · Verifica engine Stadio 2</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:720px;
+       margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.5}
+  h1{font-size:1.3rem;margin-bottom:.2rem}
+  .sub{color:#666;font-size:.9rem;margin-bottom:1.5rem}
+  .box{border:1px solid #ddd;border-radius:10px;padding:18px;margin-bottom:16px}
+  label{display:block;font-size:.85rem;color:#555;margin-bottom:4px}
+  input{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;
+        margin-bottom:12px;font-size:1rem;box-sizing:border-box}
+  button{background:#1f6f5c;color:#fff;border:0;border-radius:6px;padding:10px 18px;
+         font-size:1rem;cursor:pointer}
+  button:disabled{background:#9bb8b0;cursor:default}
+  button.ghost{background:#fff;color:#1f6f5c;border:1px solid #1f6f5c;margin-left:8px}
+  .msg{font-size:.9rem;margin-top:8px}
+  .ok{color:#1f6f5c;font-weight:600}
+  .ko{color:#b3261e;font-weight:600}
+  pre{background:#f6f6f6;border-radius:6px;padding:12px;overflow:auto;font-size:.82rem}
+  .hint{background:#fff8e6;border:1px solid #f0dca8;border-radius:8px;
+        padding:12px;font-size:.88rem;margin-top:12px}
+</style>
+</head>
+<body>
+
+<h1>Verifica engine Stadio 2</h1>
+<div class="sub">Pagina di servizio: controlla che schema, rubrica e chiave API siano a posto.
+Non modifica nulla e non valuta nessun candidato.</div>
+
+<!-- LOGIN -->
+<div class="box" id="login">
+  <label for="lg_email">Email del team</label>
+  <input id="lg_email" type="email" autocomplete="username">
+  <label for="lg_pass">Password</label>
+  <input id="lg_pass" type="password" autocomplete="current-password">
+  <button id="btnLogin">Accedi</button>
+  <div class="msg ko" id="lg_msg"></div>
+</div>
+
+<!-- TEST -->
+<div class="box" id="app" style="display:none">
+  <div style="margin-bottom:12px">
+    Accesso effettuato come <strong id="who"></strong>
+    <button class="ghost" id="btnLogout">Esci</button>
+  </div>
+
+  <button id="btnCheck">Esegui verifica</button>
+  <button class="ghost" id="btnBatch">Pre-scoring (batch)</button>
+
+  <div class="msg" id="esito"></div>
+  <pre id="out" style="display:none"></pre>
+  <div class="hint" id="hint" style="display:none"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  function el(id){ return document.getElementById(id); }
+
+  function mostra(loggato, email){
+    el("login").style.display = loggato ? "none" : "";
+    el("app").style.display   = loggato ? "" : "none";
+    if(loggato) el("who").textContent = email || "";
+  }
+
+  (async function avvia(){
+    var s = await sb.auth.getSession();
+    var sess = s.data && s.data.session;
+    mostra(!!sess, sess && sess.user && sess.user.email);
+  })();
+
+  el("btnLogin").addEventListener("click", async function(){
+    el("lg_msg").textContent = "";
+    var r = await sb.auth.signInWithPassword({
+      email: el("lg_email").value, password: el("lg_pass").value });
+    if(r.error){ el("lg_msg").textContent = "Accesso non riuscito: " + r.error.message; return; }
+    mostra(true, r.data.user.email);
+  });
+
+  el("btnLogout").addEventListener("click", async function(){
+    await sb.auth.signOut(); mostra(false);
+  });
+
+  async function chiama(payload, etichetta){
+    el("esito").className = "msg";
+    el("esito").textContent = "Attendere… (con Opus può richiedere un minuto)";
+    el("out").style.display = "none";
+    el("hint").style.display = "none";
+    el("btnCheck").disabled = true; el("btnBatch").disabled = true;
+
+    var r = await sb.functions.invoke("prescore", { body: payload });
+
+    el("btnCheck").disabled = false; el("btnBatch").disabled = false;
+
+    // Errore di trasporto/funzione
+    if(r.error){
+      el("esito").className = "msg ko";
+      el("esito").textContent = "✗ Chiamata non riuscita.";
+      var det = r.data ? JSON.stringify(r.data, null, 2) : String(r.error.message || r.error);
+      el("out").style.display = ""; el("out").textContent = det;
+      spiega(det);
+      return;
+    }
+
+    var d = r.data || {};
+    el("out").style.display = ""; el("out").textContent = JSON.stringify(d, null, 2);
+
+    if(d.ok){
+      el("esito").className = "msg ok";
+      if(etichetta === "check"){
+        el("esito").textContent = "✓ Tutto a posto: funzione attiva, rubrica caricata, credenziali valide.";
+        if((d.rimanenti||0) > 0){
+          el("hint").style.display = "";
+          el("hint").textContent = "Ci sono " + d.rimanenti +
+            " consegne in attesa di pre-scoring. Usa il pulsante “Pre-scoring (batch)” quando vuoi elaborarle.";
+        }
+      } else {
+        el("esito").textContent = d.messaggio || "Operazione completata.";
+      }
+    } else {
+      el("esito").className = "msg ko";
+      el("esito").textContent = "✗ " + (d.error || "Errore non specificato.");
+      spiega(JSON.stringify(d));
+    }
+  }
+
+  // Traduce gli errori tecnici in cosa fare
+  function spiega(testo){
+    var t = (testo || "").toLowerCase();
+    var m = null;
+    if(t.indexOf("non autorizzato") >= 0 || t.indexOf("401") >= 0)
+      m = "Sessione non valida: esci e rientra con le credenziali del team.";
+    else if(t.indexOf("nessuna rubrica attiva") >= 0)
+      m = "La rubrica non è caricata: riesegui load_rubric.sql nel SQL Editor (Passo 3).";
+    else if(t.indexOf("anthropic_api_key") >= 0 || t.indexOf("authentication_error") >= 0 ||
+            t.indexOf("invalid x-api-key") >= 0)
+      m = "Chiave API non valida o assente: ricontrolla il segreto ANTHROPIC_API_KEY (Passo 5). " +
+          "Se l’hai appena aggiunta dopo un deploy, cancellala e riaggiungila.";
+    else if(t.indexOf("credit") >= 0 || t.indexOf("billing") >= 0)
+      m = "Credito esaurito sulla console Anthropic: ricarica in Billing.";
+    else if(t.indexOf("not found") >= 0 || t.indexOf("404") >= 0)
+      m = "Funzione non trovata: controlla che si chiami esattamente “prescore” (Passo 6).";
+    if(m){ el("hint").style.display = ""; el("hint").textContent = m; }
+  }
+
+  // Verifica a vuoto: limit 0 non elabora nulla, controlla solo la catena
+  el("btnCheck").addEventListener("click", function(){
+    chiama({ batch: true, limit: 1, dry_run: true }, "check");
+  });
+  el("btnBatch").addEventListener("click", function(){
+    if(!confirm("Avvia il pre-scoring AI sulle prossime consegne. Procedere?")) return;
+    chiama({ batch: true }, "batch");
+  });
+})();
+</script>
+</body>
+</html>

@@ -61,6 +61,36 @@
   .azioni textarea{width:100%;min-height:70px;resize:vertical;}
   .danger{background:none;color:var(--errore);border:1px solid #E9BFC1;}
   .barra-note{display:flex;gap:8px;align-items:center;margin-top:8px;}
+
+  /* ---- Stadio 2 ---- */
+  .schede{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .schede button{background:var(--bianco);color:var(--grigio);border:1px solid var(--linea);font-weight:500;}
+  .schede button.on{background:var(--bosco);color:var(--carta);border-color:var(--bosco);font-weight:600;}
+  .pannello{background:var(--bianco);border:1px solid var(--linea);border-radius:10px;padding:20px;margin-bottom:16px;}
+  .pannello h2{font-family:'Fraunces',serif;color:var(--bosco);font-size:18px;margin-bottom:6px;}
+  .spiega{color:var(--grigio);font-size:13.5px;margin-bottom:14px;}
+  .barra2{height:6px;background:var(--linea);border-radius:3px;overflow:hidden;margin-top:5px;}
+  .barra2 i{display:block;height:100%;background:var(--oro);}
+  .banda{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12.5px;font-weight:600;}
+  .bd-assente{background:#FBE3E4;color:#A5323B;}
+  .bd-debole{background:#FBF0D6;color:#8A6D16;}
+  .bd-adeguato{background:#E2F3E1;color:#2E7D31;}
+  .bd-forte{background:#D7EED6;color:#1E5C21;}
+  .elab{background:var(--carta);border-radius:8px;padding:14px;font-size:14px;
+        max-height:330px;overflow:auto;white-space:pre-wrap;word-break:break-word;}
+  .quattro{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+  .quattro button{background:var(--bianco);color:var(--inchiostro);border:2px solid var(--linea);padding:13px 6px;}
+  .quattro button:hover{border-color:var(--bosco);color:var(--bosco);}
+  .descr{font-size:13.5px;color:#3A4048;}
+  .descr div{padding:6px 0;border-bottom:1px solid var(--linea);}
+  .descr b{text-transform:capitalize;color:var(--salvia);}
+  .duecol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;}
+  .duecol>div{border:1px solid var(--linea);border-radius:8px;padding:12px;}
+  .verdetto{padding:10px 14px;border-radius:8px;margin-top:12px;font-size:14px;}
+  .v-si{background:#E2F3E1;color:#2E7D31;}
+  .v-vicino{background:#FBF0D6;color:#8A6D16;}
+  .v-no{background:#FBE3E4;color:#A5323B;}
+  .avviso{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:12px;font-size:13.5px;margin-top:12px;}
 </style>
 </head>
 <body>
@@ -79,6 +109,15 @@
 </div>
 
 <div id="app" style="display:none;">
+
+  <div class="schede">
+    <button id="sc1" class="on">Candidature · Stadio 1</button>
+    <button id="sc2">Valutazione · Stadio 2</button>
+    <button id="scKo">Segnali KO</button>
+    <button id="scDiv">Divergenze</button>
+  </div>
+
+  <section id="vS1">
   <h1>Candidature — Stadio 1</h1>
   <div class="filtri">
     <input type="text" id="f_q" placeholder="Cerca nome o email" style="min-width:200px;">
@@ -120,6 +159,119 @@
   </table>
 
   <div class="dettaglio" id="dettaglio"></div>
+  </section>
+
+  <!-- ============ STADIO 2 · VALUTAZIONE ============ -->
+  <section id="vS2" style="display:none;">
+
+    <div class="pannello" id="p_pre">
+      <h2>Pre-scoring</h2>
+      <div class="spiega">Da eseguire <strong>una volta sola e fino in fondo</strong>, prima di
+      iniziare a valutare. Elabora poche consegne per volta: ripremi finché non risulta completo.
+      Nulla viene duplicato.</div>
+      <button id="btnPre">Avvia pre-scoring</button>
+      <span id="preMsg" style="margin-left:10px;font-size:13.5px;color:var(--grigio);"></span>
+    </div>
+
+    <div class="pannello" id="p_lista">
+      <h2>Scegli la domanda da valutare</h2>
+      <div class="spiega">Si valuta una domanda alla volta su tutti i candidati: riduce la deriva
+      di giudizio rispetto al valutare un candidato per volta.</div>
+      <table>
+        <thead><tr><th>Sotto-criterio</th><th>Dimensione</th><th>Avanzamento</th><th></th></tr></thead>
+        <tbody id="tbLista"></tbody>
+      </table>
+      <p class="spiega" id="listaVuota" style="display:none;margin-top:12px;">
+        Nessun elaborato pre-scorato: esegui prima il pre-scoring qui sopra.</p>
+    </div>
+
+    <div id="p_val" style="display:none;">
+      <div class="pannello">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="ghost" id="btnIndietro">← Cambia domanda</button>
+          <strong id="subTit" style="flex:1;"></strong>
+          <span style="color:var(--grigio);font-size:13.5px;" id="avanz"></span>
+        </div>
+        <div class="barra2"><i id="barra2" style="width:0%"></i></div>
+      </div>
+
+      <div class="pannello">
+        <div class="spiega">Candidato <strong id="pseudo"></strong> · <span id="metaCons"></span><br>
+        L'identità è mascherata di proposito: valuti l'elaborato, non la persona.</div>
+        <div class="elab" id="elab"></div>
+      </div>
+
+      <div class="pannello" id="p_scen" style="display:none;">
+        <h2>Chiave dello scenario</h2>
+        <div class="descr" id="scenKey"></div>
+      </div>
+
+      <div class="pannello" id="p_bande">
+        <h2>La tua valutazione</h2>
+        <div class="descr" id="descr"></div>
+        <div class="quattro">
+          <button data-bd="assente">Assente</button>
+          <button data-bd="debole">Debole</button>
+          <button data-bd="adeguato">Adeguato</button>
+          <button data-bd="forte">Forte</button>
+        </div>
+        <div class="spiega">Il punteggio dell'AI resta invisibile finché non registri il tuo.
+        Non è una scelta dell'interfaccia: è il database a impedirlo.</div>
+        <div class="msg" id="valErr"></div>
+      </div>
+
+      <div class="pannello" id="p_conf" style="display:none;">
+        <h2>Confronto</h2>
+        <div class="duecol">
+          <div><div class="spiega" style="margin:0;">La tua valutazione</div>
+               <div style="margin-top:6px;"><span class="banda" id="cH"></span></div></div>
+          <div><div class="spiega" style="margin:0;">Proposta AI <span id="cMod" style="font-size:12px;"></span></div>
+               <div style="margin-top:6px;"><span class="banda" id="cA"></span></div></div>
+        </div>
+        <div class="verdetto" id="cVerd"></div>
+        <div style="margin-top:12px;">
+          <div class="spiega" style="margin:0;">Evidenza citata dall'AI</div>
+          <div id="cEv" style="font-size:14px;"></div>
+          <div class="spiega" style="margin:8px 0 0;">Motivazione</div>
+          <div id="cRa" style="font-size:14px;"></div>
+        </div>
+        <div class="avviso" id="cNota" style="display:none;"></div>
+        <div style="margin-top:14px;">
+          <button id="btnAvanti">Candidato successivo →</button>
+          <button class="ghost" id="btnCorreggi">Correggi la mia banda</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEGNALI KO ============ -->
+  <section id="vKo" style="display:none;">
+    <div class="pannello">
+      <h2>Segnali KO</h2>
+      <div class="spiega">Il segnale <strong>non</strong> esclude nessuno. L'esclusione resta una
+      decisione esplicita e tracciata — è un vincolo dell'autorizzazione art. 29, non un dettaglio tecnico.</div>
+      <table>
+        <thead><tr><th>Candidato</th><th>Area</th><th>Motivo del segnale</th><th>Stato</th><th></th></tr></thead>
+        <tbody id="tbKo"></tbody>
+      </table>
+      <p class="spiega" id="koVuoto" style="display:none;margin-top:12px;">Nessun segnale KO registrato.</p>
+    </div>
+  </section>
+
+  <!-- ============ DIVERGENZE ============ -->
+  <section id="vDiv" style="display:none;">
+    <div class="pannello">
+      <h2>Divergenze AI ↔ umano</h2>
+      <div class="spiega">Solo dove hai già valutato. Utile a fine sessione per vedere se il modello
+      sbaglia in modo sistematico su un certo sotto-criterio.</div>
+      <table>
+        <thead><tr><th>Candidato</th><th>Sotto-criterio</th><th>Tu</th><th>AI</th><th>Scarto</th></tr></thead>
+        <tbody id="tbDiv"></tbody>
+      </table>
+      <p class="spiega" id="divVuoto" style="display:none;margin-top:12px;">Nessuna valutazione registrata finora.</p>
+    </div>
+  </section>
+
 </div>
 
 </main>
@@ -344,6 +496,280 @@
     a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
     a.download = "candidature_stadio1.csv"; a.click();
   });
+
+
+  // ==========================================================
+  // STADIO 2 — valutazione, KO, divergenze
+  // Variabili con suffisso 2 per non collidere con lo Stadio 1.
+  // ==========================================================
+  var ORD2 = {assente:0, debole:1, adeguato:2, forte:3};
+  var rubrica2 = null, coda2 = [], idx2 = 0, sub2 = null;
+
+  function scheda2(nome){
+    el("vS1").style.display  = nome==="s1"  ? "" : "none";
+    el("vS2").style.display  = nome==="s2"  ? "" : "none";
+    el("vKo").style.display  = nome==="ko"  ? "" : "none";
+    el("vDiv").style.display = nome==="div" ? "" : "none";
+    el("sc1").className   = nome==="s1"  ? "on" : "";
+    el("sc2").className   = nome==="s2"  ? "on" : "";
+    el("scKo").className  = nome==="ko"  ? "on" : "";
+    el("scDiv").className = nome==="div" ? "on" : "";
+    if(nome==="s2"){ avviaS2(); }
+    if(nome==="ko"){ caricaKo(); }
+    if(nome==="div"){ caricaDiv(); }
+  }
+  el("sc1").addEventListener("click",   function(){ scheda2("s1"); });
+  el("sc2").addEventListener("click",   function(){ scheda2("s2"); });
+  el("scKo").addEventListener("click",  function(){ scheda2("ko"); });
+  el("scDiv").addEventListener("click", function(){ scheda2("div"); });
+
+  // carica la rubrica solo la prima volta che serve
+  async function avviaS2(){
+    if(!rubrica2){
+      var r = await sb.rpc("get_eval_rubric");
+      if(r.error){
+        el("listaVuota").style.display = "";
+        el("listaVuota").innerHTML = "Rubrica non disponibile: " + esc(r.error.message) +
+          "<br>Hai eseguito <strong>stage2_addendum.sql</strong> nel SQL Editor?";
+        return;
+      }
+      rubrica2 = r.data;
+    }
+    caricaLista2();
+  }
+
+  // ---------- pre-scoring ----------
+  el("btnPre").addEventListener("click", async function(){
+    if(!confirm("Avvia il pre-scoring AI sulle prossime consegne. Procedere?")) return;
+    var b = el("btnPre"); b.disabled = true;
+    el("preMsg").textContent = "In corso… può richiedere un minuto.";
+    var r = await sb.functions.invoke("prescore", {body:{batch:true}});
+    b.disabled = false;
+    if(r.error){ el("preMsg").textContent = "Non riuscito: " + (r.error.message||r.error); return; }
+    var d = r.data || {};
+    el("preMsg").textContent = d.messaggio || "Operazione completata.";
+    if(d.fallite){ el("preMsg").textContent += "  (" + d.fallite + " fallite)"; }
+    caricaLista2();
+  });
+
+  // ---------- elenco sotto-criteri ----------
+  async function caricaLista2(){
+    el("p_lista").style.display = ""; el("p_val").style.display = "none"; el("p_pre").style.display = "";
+    var r = await sb.from("v_stage2_progress").select("*");
+    var t = el("tbLista"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan='4' class='msg'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("listaVuota").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(row){
+      var pct = row.totale ? Math.round(row.valutate*100/row.totale) : 0;
+      var tr = document.createElement("tr");
+      tr.className = "riga-cand";
+      tr.innerHTML =
+        "<td><strong>"+esc(row.subcriterion_id)+"</strong></td>"+
+        "<td style='color:var(--grigio);'>"+esc(row.dimension)+"</td>"+
+        "<td>"+row.valutate+" / "+row.totale+"<div class='barra2'><i style='width:"+pct+"%'></i></div></td>"+
+        "<td>"+(row.da_valutare ? "<button class='ghost'>Valuta</button>"
+                                : "<span style='color:var(--grigio);font-size:13px;'>completato</span>")+"</td>";
+      tr.addEventListener("click", function(){ apriSub2(row); });
+      t.appendChild(tr);
+    });
+  }
+
+  async function apriSub2(row){
+    sub2 = row;
+    var r = await sb.from("v_stage2_queue").select("*").eq("subcriterion_id", row.subcriterion_id);
+    if(r.error){ alert(r.error.message); return; }
+    coda2 = (r.data||[]).filter(function(x){ return !x.human_done; });
+    if(!coda2.length){ alert("Questa domanda è già stata valutata su tutti i candidati."); return; }
+    idx2 = 0;
+    el("p_lista").style.display = "none"; el("p_pre").style.display = "none"; el("p_val").style.display = "";
+    el("subTit").textContent = row.subcriterion_id;
+    mostraCand2();
+  }
+  el("btnIndietro").addEventListener("click", caricaLista2);
+
+  function renderContenuto2(c){
+    if(c == null) return "(elaborato vuoto)";
+    if(typeof c === "string") return c;
+    var out = [];
+    Object.keys(c).forEach(function(k){
+      var v = c[k];
+      out.push("▸ " + k.replace(/_/g," ").toUpperCase() + "\n" +
+        (typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)));
+    });
+    return out.join("\n\n");
+  }
+
+  async function mostraCand2(){
+    el("p_conf").style.display = "none"; el("p_bande").style.display = "";
+    el("valErr").textContent = "";
+    var q = coda2[idx2];
+    var fatte = sub2.totale - coda2.length + idx2;
+    el("avanz").textContent = (idx2+1) + " di " + coda2.length + " da valutare";
+    el("barra2").style.width = Math.round(fatte*100/sub2.totale) + "%";
+    el("pseudo").textContent = q.pseudonym;
+    el("metaCons").textContent = q.consegna_key + " · " + q.variant +
+      (q.scenario_id ? " · scenario " + q.scenario_id : "");
+
+    var r = await sb.from("stage2_consegne").select("contenuto").eq("id", q.consegna_id).single();
+    el("elab").textContent = r.error ? ("Errore: "+r.error.message) : renderContenuto2(r.data.contenuto);
+
+    var blocco2 = rubrica2.schema.consegne[q.consegna_key] || {};
+    var bande = (blocco2.bands || {})[sub2.subcriterion_id];
+    var d = el("descr"); d.innerHTML = "";
+    if(bande){
+      ["assente","debole","adeguato","forte"].forEach(function(b){
+        if(bande[b]) d.innerHTML += "<div><b>"+b+":</b> "+esc(bande[b])+"</div>";
+      });
+    } else {
+      d.innerHTML = "<div style='color:var(--grigio);'>Nessun descrittore testuale: valuta contro la chiave dello scenario.</div>";
+    }
+
+    var sk = (q.consegna_key === "scenario_osservativo" && q.scenario_id && blocco2.scenarios)
+             ? blocco2.scenarios[q.scenario_id] : null;
+    if(sk){
+      el("p_scen").style.display = "";
+      var h = "<div><b>Obiettivo:</b> "+esc(sk.obiettivo_bimestre)+"</div>";
+      if(Object.prototype.toString.call(sk.observations) === "[object Array]"){
+        sk.observations.forEach(function(o){
+          h += "<div><b>Oss."+o.n+":</b> atteso "+esc(o.expected)+" (mark "+esc(o.mark)+
+               ") — tolleranza: "+esc(o.tolerance)+"</div>";
+        });
+      }
+      h += "<div><b>Meccanismo:</b> "+esc(sk.meccanismo)+"</div>";
+      h += "<div><b>Errore tipico:</b> "+esc(sk.errore_tipico)+"</div>";
+      h += "<div><b>Segnale forte:</b> "+esc(sk.segnale_forte)+"</div>";
+      el("scenKey").innerHTML = h;
+    } else { el("p_scen").style.display = "none"; }
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".quattro button[data-bd]"), function(b){
+    b.addEventListener("click", function(){ registra2(b.getAttribute("data-bd")); });
+  });
+
+  async function registra2(banda){
+    el("valErr").textContent = "";
+    var q = coda2[idx2];
+    var blocco2 = rubrica2.schema.consegne[q.consegna_key] || {};
+    var feeds = blocco2.feeds_dimensions || {};
+    var peso = feeds[String(sub2.dimension)] || "secondary";
+    var r = await sb.rpc("record_human_score", {
+      p_consegna_id: q.consegna_id,
+      p_subcriterion_id: sub2.subcriterion_id,
+      p_dimension: String(sub2.dimension),
+      p_weight_role: peso,
+      p_band: banda
+    });
+    if(r.error){ el("valErr").textContent = "Registrazione non riuscita: " + r.error.message; return; }
+    confronto2(r.data);
+  }
+
+  function confronto2(d){
+    el("p_bande").style.display = "none"; el("p_conf").style.display = "";
+    var hb = d.human.band;
+    el("cH").className = "banda bd-"+hb; el("cH").textContent = hb;
+    if(!d.ai){
+      el("cA").className = "banda"; el("cA").textContent = "non disponibile";
+      el("cVerd").className = "verdetto v-vicino";
+      el("cVerd").textContent = "Nessuna proposta AI per questo sotto-criterio.";
+      el("cEv").textContent = "—"; el("cRa").textContent = "—";
+      el("cNota").style.display = "none"; return;
+    }
+    var ab = d.ai.band;
+    el("cA").className = "banda bd-"+ab; el("cA").textContent = ab;
+    el("cMod").textContent = "(" + (d.ai.model_version||"") + ")";
+    el("cEv").textContent = d.ai.evidence || "—";
+    el("cRa").textContent = d.ai.rationale || "—";
+    var scarto = Math.abs(ORD2[hb] - ORD2[ab]);
+    var v = el("cVerd");
+    if(scarto === 0){ v.className = "verdetto v-si"; v.textContent = "Accordo pieno."; }
+    else if(scarto === 1){ v.className = "verdetto v-vicino";
+      v.textContent = "Scarto di un livello: fisiologico, nessuna azione necessaria."; }
+    else { v.className = "verdetto v-no";
+      v.textContent = "Scarto di " + scarto + " livelli: vale la pena rileggere l'evidenza citata."; }
+    var n = el("cNota");
+    if(scarto >= 2){
+      n.style.display = "";
+      n.textContent = "La tua valutazione resta quella valida. Se rileggendo cambi idea, usa " +
+        "“Correggi la mia banda”: la correzione è registrata come nuovo evento, senza cancellare il precedente.";
+    } else { n.style.display = "none"; }
+  }
+
+  el("btnCorreggi").addEventListener("click", function(){
+    el("p_conf").style.display = "none"; el("p_bande").style.display = "";
+    el("valErr").textContent = "";
+  });
+  el("btnAvanti").addEventListener("click", function(){
+    idx2++;
+    if(idx2 >= coda2.length){ alert("Domanda completata su tutti i candidati."); caricaLista2(); return; }
+    mostraCand2();
+  });
+
+  // ---------- KO ----------
+  async function caricaKo(){
+    var r = await sb.from("v_ko_panel").select("*");
+    var t = el("tbKo"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan='5' class='msg'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("koVuoto").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(k){
+      var stato = k.ko_confirmed_at
+        ? (k.ko_confirmed ? "<span class='es es-scarta'>KO confermato</span>"
+                          : "<span class='es es-avanza'>prosegue</span>")
+        : "<span class='es es-dubbio'>da confermare</span>";
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>"+esc(k.cognome||"")+" "+esc(k.nome||"")+"</strong><br>"+
+          "<span style='color:var(--grigio);font-size:12.5px;'>"+esc(k.pseudonym)+"</span></td>"+
+        "<td>"+(AREE[k.area]||esc(k.area||""))+"</td>"+
+        "<td style='font-size:13.5px;'>"+esc(k.ko_signal_reason||"—")+"</td>"+
+        "<td>"+stato+"</td><td></td>";
+      if(!k.ko_confirmed_at){
+        var td = tr.lastChild;
+        var b1 = document.createElement("button");
+        b1.className = "danger"; b1.textContent = "Conferma KO";
+        b1.addEventListener("click", function(){ decidiKo(k, true); });
+        var b2 = document.createElement("button");
+        b2.className = "ghost"; b2.style.marginLeft = "6px"; b2.textContent = "Prosegue";
+        b2.addEventListener("click", function(){ decidiKo(k, false); });
+        td.appendChild(b1); td.appendChild(b2);
+      }
+      t.appendChild(tr);
+    });
+  }
+
+  async function decidiKo(k, conferma){
+    var chi = (k.cognome||"") + " " + (k.nome||"");
+    var testo = conferma
+      ? "Confermi il KO per " + chi + "?\n\nVerrà registrato con il tuo nome e la data. " +
+        "L'esito finale del candidato resta un passaggio separato."
+      : "Confermi che " + chi + " prosegue nonostante il segnale?";
+    if(!confirm(testo)) return;
+    var motivo = prompt("Motivazione (obbligatoria, resta agli atti):", "");
+    if(motivo === null || !motivo.trim()){ alert("Serve una motivazione."); return; }
+    var r = await sb.rpc("confirm_ko", {
+      p_candidate_id: k.candidate_id, p_confirm: conferma, p_reason: motivo.trim() });
+    if(r.error){ alert("Non riuscito: " + r.error.message); return; }
+    caricaKo();
+  }
+
+  // ---------- divergenze ----------
+  function bandaPill(b){ return "<span class='banda bd-"+b+"'>"+b+"</span>"; }
+  async function caricaDiv(){
+    var r = await sb.from("v_divergenze").select("*").limit(200);
+    var t = el("tbDiv"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan='5' class='msg'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("divVuoto").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(d){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+esc(d.pseudonym)+"</td>"+
+        "<td style='font-size:13.5px;'>"+esc(d.subcriterion_id)+"</td>"+
+        "<td>"+bandaPill(d.human_band)+"</td>"+
+        "<td>"+bandaPill(d.ai_band)+"</td>"+
+        "<td>"+(d.scarto_assoluto===0 ? "<span style='color:var(--grigio);'>—</span>"
+                                      : d.scarto_assoluto+" liv.")+"</td>";
+      t.appendChild(tr);
+    });
+  }
 
   avvia();
 })();

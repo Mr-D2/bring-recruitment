@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>br-ing · Valutazione Stadio 2</title>
+<style>
+  :root{ --verde:#1f6f5c; --bordo:#e0e0e0; --grigio:#666; --sfondo:#fafafa; }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;
+       color:#1a1a1a;line-height:1.55;background:var(--sfondo)}
+  header{background:#fff;border-bottom:1px solid var(--bordo);padding:14px 22px;
+         display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10}
+  header h1{font-size:1.05rem;margin:0;flex:1}
+  main{max-width:960px;margin:0 auto;padding:22px}
+  .box{background:#fff;border:1px solid var(--bordo);border-radius:10px;
+       padding:18px;margin-bottom:16px}
+  label{display:block;font-size:.85rem;color:var(--grigio);margin-bottom:4px}
+  input,select,textarea{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;
+        margin-bottom:12px;font-size:1rem;font-family:inherit}
+  button{background:var(--verde);color:#fff;border:0;border-radius:6px;
+         padding:9px 16px;font-size:.95rem;cursor:pointer}
+  button:disabled{background:#9bb8b0;cursor:default}
+  button.ghost{background:#fff;color:var(--verde);border:1px solid var(--verde)}
+  button.rosso{background:#b3261e}
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tabs button{background:#fff;color:var(--grigio);border:1px solid var(--bordo)}
+  .tabs button.on{background:var(--verde);color:#fff;border-color:var(--verde)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #eee}
+  th{font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;color:var(--grigio)}
+  tr.click{cursor:pointer} tr.click:hover{background:#f4f9f7}
+  .pill{display:inline-block;padding:2px 9px;border-radius:11px;font-size:.78rem;font-weight:600}
+  .b-assente{background:#fbe9e7;color:#9b2c1f}
+  .b-debole{background:#fff4e0;color:#8a5a00}
+  .b-adeguato{background:#e8f2ec;color:#1f6f5c}
+  .b-forte{background:#dcefe4;color:#14503f}
+  .barra{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-top:4px}
+  .barra i{display:block;height:100%;background:var(--verde)}
+  .elaborato{background:#f7f7f7;border-radius:8px;padding:14px;font-size:.9rem;
+             max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .bande{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+  .bande button{padding:12px 6px;font-size:.92rem;background:#fff;color:#333;
+                border:2px solid var(--bordo)}
+  .bande button:hover{border-color:var(--verde);color:var(--verde)}
+  .desc{font-size:.85rem;color:#444;margin-bottom:12px}
+  .desc div{padding:6px 0;border-bottom:1px solid #f0f0f0}
+  .desc b{text-transform:capitalize}
+  .confronto{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .confronto>div{border:1px solid var(--bordo);border-radius:8px;padding:12px}
+  .accordo{padding:10px 14px;border-radius:8px;margin-top:12px;font-size:.92rem}
+  .a-si{background:#e8f2ec;color:#14503f}
+  .a-vicino{background:#fff4e0;color:#8a5a00}
+  .a-no{background:#fbe9e7;color:#9b2c1f}
+  .nota{background:#fff8e6;border:1px solid #f0dca8;border-radius:8px;
+        padding:12px;font-size:.88rem;margin-top:12px}
+  .muto{color:var(--grigio);font-size:.88rem}
+  .err{color:#b3261e;font-size:.9rem}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Valutazione Stadio 2</h1>
+  <span class="muto" id="chi"></span>
+  <button class="ghost" id="btnLogout" style="display:none">Esci</button>
+</header>
+
+<main>
+
+<!-- LOGIN -->
+<div class="box" id="login">
+  <label for="lg_email">Email del team</label>
+  <input id="lg_email" type="email" autocomplete="username">
+  <label for="lg_pass">Password</label>
+  <input id="lg_pass" type="password" autocomplete="current-password">
+  <button id="btnLogin">Accedi</button>
+  <div class="err" id="lg_msg"></div>
+</div>
+
+<div id="app" style="display:none">
+
+  <div class="tabs">
+    <button id="tabCoda" class="on">Valutazione</button>
+    <button id="tabKo">Segnali KO</button>
+    <button id="tabDiv">Divergenze</button>
+  </div>
+
+  <!-- ============ CODA ============ -->
+  <section id="vCoda">
+
+    <!-- elenco sotto-criteri -->
+    <div class="box" id="paneLista">
+      <h2 style="margin-top:0;font-size:1rem">Scegli la domanda da valutare</h2>
+      <p class="muto">Si valuta una domanda alla volta su tutti i candidati: riduce la deriva
+      di giudizio rispetto al valutare un candidato per volta.</p>
+      <table>
+        <thead><tr><th>Sotto-criterio</th><th>Dimensione</th><th>Avanzamento</th><th></th></tr></thead>
+        <tbody id="tbLista"></tbody>
+      </table>
+      <div class="muto" id="listaVuota" style="display:none">
+        Nessun elaborato pre-scorato. Esegui prima il pre-scoring da <b>verifica.html</b>.
+      </div>
+    </div>
+
+    <!-- valutazione singola -->
+    <div id="paneVal" style="display:none">
+      <div class="box">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+          <button class="ghost" id="btnIndietro">← Cambia domanda</button>
+          <strong id="subTitolo" style="flex:1"></strong>
+          <span class="muto" id="avanz"></span>
+        </div>
+        <div class="barra"><i id="barra" style="width:0%"></i></div>
+      </div>
+
+      <div class="box">
+        <div class="muto" style="margin-bottom:8px">
+          Candidato <strong id="pseudo"></strong> · <span id="metaCons"></span>
+          <br><span style="font-size:.82rem">L'identità è mascherata di proposito: valuti l'elaborato, non la persona.</span>
+        </div>
+        <div class="elaborato" id="elaborato"></div>
+      </div>
+
+      <div class="box" id="boxScenario" style="display:none">
+        <h3 style="margin-top:0;font-size:.95rem">Chiave dello scenario (riservata)</h3>
+        <div class="desc" id="scenarioKey"></div>
+      </div>
+
+      <div class="box" id="boxBande">
+        <h3 style="margin-top:0;font-size:.95rem">La tua valutazione</h3>
+        <div class="desc" id="descrittori"></div>
+        <div class="bande">
+          <button data-b="assente">Assente</button>
+          <button data-b="debole">Debole</button>
+          <button data-b="adeguato">Adeguato</button>
+          <button data-b="forte">Forte</button>
+        </div>
+        <div class="muto">Il punteggio dell'AI resta invisibile finché non registri il tuo.
+        Non è una scelta dell'interfaccia: è il database a impedirlo.</div>
+        <div class="err" id="valErr"></div>
+      </div>
+
+      <!-- confronto post-registrazione -->
+      <div class="box" id="boxConfronto" style="display:none">
+        <h3 style="margin-top:0;font-size:.95rem">Confronto</h3>
+        <div class="confronto">
+          <div>
+            <div class="muto">La tua valutazione</div>
+            <div style="margin-top:6px"><span class="pill" id="cHuman"></span></div>
+          </div>
+          <div>
+            <div class="muto">Proposta AI <span id="cModello" style="font-size:.78rem"></span></div>
+            <div style="margin-top:6px"><span class="pill" id="cAi"></span></div>
+          </div>
+        </div>
+        <div class="accordo" id="cAccordo"></div>
+        <div style="margin-top:12px">
+          <div class="muto">Evidenza citata dall'AI</div>
+          <div id="cEvid" style="font-size:.9rem"></div>
+          <div class="muto" style="margin-top:8px">Motivazione</div>
+          <div id="cRaz" style="font-size:.9rem"></div>
+        </div>
+        <div class="nota" id="cNota" style="display:none"></div>
+        <div style="margin-top:14px">
+          <button id="btnAvanti">Candidato successivo →</button>
+          <button class="ghost" id="btnCorreggi">Correggi la mia banda</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ KO ============ -->
+  <section id="vKo" style="display:none">
+    <div class="box">
+      <h2 style="margin-top:0;font-size:1rem">Segnali KO</h2>
+      <p class="muto">Il segnale <b>non</b> esclude nessuno. L'esclusione resta una tua decisione
+      esplicita e tracciata — è un vincolo dell'autorizzazione art. 29, non un dettaglio tecnico.</p>
+      <table>
+        <thead><tr><th>Candidato</th><th>Area</th><th>Motivo segnale</th><th>Stato</th><th></th></tr></thead>
+        <tbody id="tbKo"></tbody>
+      </table>
+      <div class="muto" id="koVuoto" style="display:none">Nessun segnale KO registrato.</div>
+    </div>
+  </section>
+
+  <!-- ============ DIVERGENZE ============ -->
+  <section id="vDiv" style="display:none">
+    <div class="box">
+      <h2 style="margin-top:0;font-size:1rem">Divergenze AI ↔ umano</h2>
+      <p class="muto">Solo dove hai già valutato. Utile a fine sessione per rivedere i disaccordi
+      netti e verificare se il modello sta sbagliando in modo sistematico.</p>
+      <table>
+        <thead><tr><th>Candidato</th><th>Sotto-criterio</th><th>Tu</th><th>AI</th><th>Scarto</th></tr></thead>
+        <tbody id="tbDiv"></tbody>
+      </table>
+      <div class="muto" id="divVuoto" style="display:none">Nessuna valutazione registrata finora.</div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  var ORD = {assente:0, debole:1, adeguato:2, forte:3};
+  var rubrica = null;      // schema completo
+  var coda = [];           // candidati per il sotto-criterio corrente
+  var idx = 0;             // posizione nella coda
+  var subCorrente = null;  // {subcriterion_id, dimension}
+
+  // ---------- accesso ----------
+  function mostra(loggato, email){
+    el("login").style.display = loggato ? "none" : "";
+    el("app").style.display   = loggato ? "" : "none";
+    el("btnLogout").style.display = loggato ? "" : "none";
+    el("chi").textContent = loggato ? (email||"") : "";
+    if(loggato) avviaApp();
+  }
+  (async function(){
+    var s = await sb.auth.getSession();
+    var sess = s.data && s.data.session;
+    mostra(!!sess, sess && sess.user && sess.user.email);
+  })();
+  el("btnLogin").addEventListener("click", async function(){
+    el("lg_msg").textContent = "";
+    var r = await sb.auth.signInWithPassword({
+      email: el("lg_email").value, password: el("lg_pass").value });
+    if(r.error){ el("lg_msg").textContent = "Accesso non riuscito: " + r.error.message; return; }
+    mostra(true, r.data.user.email);
+  });
+  el("btnLogout").addEventListener("click", async function(){
+    await sb.auth.signOut(); location.reload();
+  });
+
+  async function avviaApp(){
+    var r = await sb.rpc("get_eval_rubric");
+    if(r.error){ alert("Rubrica non disponibile: " + r.error.message +
+      "\n\nHai eseguito stage2_addendum.sql?"); return; }
+    rubrica = r.data;
+    caricaLista();
+  }
+
+  // ---------- schede ----------
+  function scheda(nome){
+    el("vCoda").style.display = nome==="coda" ? "" : "none";
+    el("vKo").style.display   = nome==="ko"   ? "" : "none";
+    el("vDiv").style.display  = nome==="div"  ? "" : "none";
+    el("tabCoda").className = nome==="coda" ? "on" : "";
+    el("tabKo").className   = nome==="ko"   ? "on" : "";
+    el("tabDiv").className  = nome==="div"  ? "on" : "";
+    if(nome==="ko") caricaKo();
+    if(nome==="div") caricaDiv();
+  }
+  el("tabCoda").addEventListener("click", function(){ scheda("coda"); });
+  el("tabKo").addEventListener("click",   function(){ scheda("ko"); });
+  el("tabDiv").addEventListener("click",  function(){ scheda("div"); });
+
+  // ---------- elenco sotto-criteri ----------
+  async function caricaLista(){
+    el("paneLista").style.display = ""; el("paneVal").style.display = "none";
+    var r = await sb.from("v_stage2_progress").select("*");
+    var t = el("tbLista"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan=4 class='err'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("listaVuota").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(row){
+      var pct = row.totale ? Math.round(row.valutate*100/row.totale) : 0;
+      var tr = document.createElement("tr");
+      tr.className = "click";
+      tr.innerHTML =
+        "<td><strong>"+esc(row.subcriterion_id)+"</strong></td>"+
+        "<td class='muto'>"+esc(row.dimension)+"</td>"+
+        "<td>"+row.valutate+" / "+row.totale+
+          "<div class='barra'><i style='width:"+pct+"%'></i></div></td>"+
+        "<td>"+(row.da_valutare ? "<button>Valuta</button>" :
+                "<span class='muto'>completato</span>")+"</td>";
+      tr.addEventListener("click", function(){ apriSub(row); });
+      t.appendChild(tr);
+    });
+  }
+
+  // ---------- apertura sotto-criterio ----------
+  async function apriSub(row){
+    subCorrente = row;
+    var r = await sb.from("v_stage2_queue").select("*").eq("subcriterion_id", row.subcriterion_id);
+    if(r.error){ alert(r.error.message); return; }
+    coda = (r.data||[]).filter(function(x){ return !x.human_done; });
+    if(!coda.length){ alert("Questa domanda è già stata valutata su tutti i candidati."); return; }
+    idx = 0;
+    el("paneLista").style.display = "none"; el("paneVal").style.display = "";
+    el("subTitolo").textContent = row.subcriterion_id;
+    mostraCandidato();
+  }
+  el("btnIndietro").addEventListener("click", caricaLista);
+
+  // ---------- rendering elaborato ----------
+  function renderContenuto(c){
+    if(c == null) return "(elaborato vuoto)";
+    if(typeof c === "string") return c;
+    var out = [];
+    Object.keys(c).forEach(function(k){
+      var v = c[k];
+      out.push("▸ " + k.replace(/_/g," ").toUpperCase() + "\n" +
+        (typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)));
+    });
+    return out.join("\n\n");
+  }
+
+  async function mostraCandidato(){
+    el("boxConfronto").style.display = "none";
+    el("boxBande").style.display = "";
+    el("valErr").textContent = "";
+
+    var q = coda[idx];
+    var fatte = subCorrente.totale - coda.length + idx;
+    el("avanz").textContent = (idx+1) + " di " + coda.length + " da valutare";
+    el("barra").style.width = Math.round(fatte*100/subCorrente.totale) + "%";
+    el("pseudo").textContent = q.pseudonym;
+    el("metaCons").textContent = q.consegna_key + " · " + q.variant +
+      (q.scenario_id ? " · scenario " + q.scenario_id : "");
+
+    // contenuto
+    var r = await sb.from("stage2_consegne").select("contenuto").eq("id", q.consegna_id).single();
+    el("elaborato").textContent = r.error ? ("Errore: "+r.error.message)
+                                          : renderContenuto(r.data.contenuto);
+
+    // descrittori di banda dalla rubrica
+    var blocco = rubrica.schema.consegne[q.consegna_key] || {};
+    var bande = (blocco.bands || {})[subCorrente.subcriterion_id];
+    var d = el("descrittori"); d.innerHTML = "";
+    if(bande){
+      ["assente","debole","adeguato","forte"].forEach(function(b){
+        if(bande[b]) d.innerHTML += "<div><b>"+b+":</b> "+esc(bande[b])+"</div>";
+      });
+    } else {
+      d.innerHTML = "<div class='muto'>Nessun descrittore testuale: valuta contro la chiave dello scenario qui sopra.</div>";
+    }
+
+    // chiave scenario
+    var sk = (q.consegna_key === "scenario_osservativo" && q.scenario_id && blocco.scenarios)
+             ? blocco.scenarios[q.scenario_id] : null;
+    if(sk){
+      el("boxScenario").style.display = "";
+      var h = "";
+      h += "<div><b>Obiettivo:</b> "+esc(sk.obiettivo_bimestre)+"</div>";
+      if(Array.isArray(sk.observations)){
+        sk.observations.forEach(function(o){
+          h += "<div><b>Oss."+o.n+":</b> atteso "+esc(o.expected)+" (mark "+esc(o.mark)+
+               ") — tolleranza: "+esc(o.tolerance)+"</div>";
+        });
+      }
+      h += "<div><b>Meccanismo:</b> "+esc(sk.meccanismo)+"</div>";
+      h += "<div><b>Errore tipico:</b> "+esc(sk.errore_tipico)+"</div>";
+      h += "<div><b>Segnale forte:</b> "+esc(sk.segnale_forte)+"</div>";
+      el("scenarioKey").innerHTML = h;
+    } else { el("boxScenario").style.display = "none"; }
+  }
+
+  // ---------- registrazione banda ----------
+  Array.prototype.forEach.call(document.querySelectorAll(".bande button"), function(b){
+    b.addEventListener("click", function(){ registra(b.getAttribute("data-b")); });
+  });
+
+  async function registra(banda){
+    el("valErr").textContent = "";
+    var q = coda[idx];
+    var blocco = rubrica.schema.consegne[q.consegna_key] || {};
+    var feeds = blocco.feeds_dimensions || {};
+    var peso = feeds[String(subCorrente.dimension)] || "secondary";
+
+    var r = await sb.rpc("record_human_score", {
+      p_consegna_id: q.consegna_id,
+      p_subcriterion_id: subCorrente.subcriterion_id,
+      p_dimension: String(subCorrente.dimension),
+      p_weight_role: peso,
+      p_band: banda
+    });
+    if(r.error){ el("valErr").textContent = "Registrazione non riuscita: " + r.error.message; return; }
+
+    mostraConfronto(r.data);
+  }
+
+  function pill(b){ return "<span class='pill b-"+b+"'>"+b+"</span>"; }
+
+  function mostraConfronto(d){
+    el("boxBande").style.display = "none";
+    el("boxConfronto").style.display = "";
+    var hb = d.human.band;
+    el("cHuman").className = "pill b-"+hb; el("cHuman").textContent = hb;
+
+    if(!d.ai){
+      el("cAi").className = "pill"; el("cAi").textContent = "non disponibile";
+      el("cAccordo").className = "accordo a-vicino";
+      el("cAccordo").textContent = "Nessuna proposta AI per questo sotto-criterio.";
+      el("cEvid").textContent = "—"; el("cRaz").textContent = "—";
+      el("cNota").style.display = "none";
+      return;
+    }
+    var ab = d.ai.band;
+    el("cAi").className = "pill b-"+ab; el("cAi").textContent = ab;
+    el("cModello").textContent = "(" + (d.ai.model_version||"") + ")";
+    el("cEvid").textContent = d.ai.evidence || "—";
+    el("cRaz").textContent  = d.ai.rationale || "—";
+
+    var scarto = Math.abs(ORD[hb] - ORD[ab]);
+    var a = el("cAccordo");
+    if(scarto === 0){ a.className = "accordo a-si"; a.textContent = "Accordo pieno."; }
+    else if(scarto === 1){ a.className = "accordo a-vicino";
+      a.textContent = "Scarto di un livello: fisiologico, nessuna azione necessaria."; }
+    else { a.className = "accordo a-no";
+      a.textContent = "Scarto di " + scarto + " livelli: vale la pena rileggere l'evidenza citata."; }
+
+    var n = el("cNota");
+    if(scarto >= 2){
+      n.style.display = "";
+      n.textContent = "La tua valutazione resta quella valida. Se rileggendo l'evidenza cambi idea, " +
+        "usa “Correggi la mia banda”: la correzione viene registrata come nuovo evento, senza cancellare il precedente.";
+    } else { n.style.display = "none"; }
+  }
+
+  el("btnCorreggi").addEventListener("click", function(){
+    el("boxConfronto").style.display = "none";
+    el("boxBande").style.display = "";
+    el("valErr").textContent = "";
+  });
+
+  el("btnAvanti").addEventListener("click", function(){
+    idx++;
+    if(idx >= coda.length){
+      alert("Domanda completata su tutti i candidati.");
+      caricaLista(); return;
+    }
+    mostraCandidato();
+  });
+
+  // ---------- pannello KO ----------
+  async function caricaKo(){
+    var r = await sb.from("v_ko_panel").select("*");
+    var t = el("tbKo"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan=5 class='err'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("koVuoto").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(k){
+      var stato = k.ko_confirmed_at
+        ? (k.ko_confirmed ? "<span class='pill b-assente'>KO confermato</span>"
+                          : "<span class='pill b-adeguato'>respinto, prosegue</span>")
+        : "<span class='pill b-debole'>da confermare</span>";
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+esc(k.cognome||"")+" "+esc(k.nome||"")+"<br><span class='muto'>"+esc(k.pseudonym)+"</span></td>"+
+        "<td class='muto'>"+esc(k.area||"")+"</td>"+
+        "<td style='font-size:.86rem'>"+esc(k.ko_signal_reason||"—")+"</td>"+
+        "<td>"+stato+"</td><td></td>";
+      if(!k.ko_confirmed_at){
+        var td = tr.lastChild;
+        var b1 = document.createElement("button");
+        b1.className = "rosso"; b1.textContent = "Conferma KO";
+        b1.addEventListener("click", function(){ decidiKo(k, true); });
+        var b2 = document.createElement("button");
+        b2.className = "ghost"; b2.style.marginLeft = "6px"; b2.textContent = "Prosegue";
+        b2.addEventListener("click", function(){ decidiKo(k, false); });
+        td.appendChild(b1); td.appendChild(b2);
+      }
+      t.appendChild(tr);
+    });
+  }
+
+  async function decidiKo(k, conferma){
+    var testo = conferma
+      ? "Confermi il KO per " + (k.cognome||"") + " " + (k.nome||"") + "?\n\n" +
+        "Verrà registrato con il tuo nome e la data. L'esito finale del candidato resta comunque un passaggio separato."
+      : "Confermi che " + (k.cognome||"") + " " + (k.nome||"") + " prosegue nonostante il segnale?";
+    if(!confirm(testo)) return;
+    var motivo = prompt("Motivazione (obbligatoria, resta agli atti):", "");
+    if(motivo === null || !motivo.trim()){ alert("Serve una motivazione."); return; }
+    var r = await sb.rpc("confirm_ko", {
+      p_candidate_id: k.candidate_id, p_confirm: conferma, p_reason: motivo.trim() });
+    if(r.error){ alert("Non riuscito: " + r.error.message); return; }
+    caricaKo();
+  }
+
+  // ---------- divergenze ----------
+  async function caricaDiv(){
+    var r = await sb.from("v_divergenze").select("*").limit(200);
+    var t = el("tbDiv"); t.innerHTML = "";
+    if(r.error){ t.innerHTML = "<tr><td colspan=5 class='err'>"+esc(r.error.message)+"</td></tr>"; return; }
+    el("divVuoto").style.display = (r.data && r.data.length) ? "none" : "";
+    (r.data||[]).forEach(function(d){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+esc(d.pseudonym)+"</td>"+
+        "<td style='font-size:.86rem'>"+esc(d.subcriterion_id)+"</td>"+
+        "<td>"+pill(d.human_band)+"</td>"+
+        "<td>"+pill(d.ai_band)+"</td>"+
+        "<td>"+(d.scarto_assoluto===0?"<span class='muto'>—</span>":d.scarto_assoluto+" liv.")+"</td>";
+      t.appendChild(tr);
+    });
+  }
+
+})();
+</script>
+</body>
+</html>

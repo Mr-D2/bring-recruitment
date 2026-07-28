@@ -91,6 +91,19 @@
   .v-vicino{background:#FBF0D6;color:#8A6D16;}
   .v-no{background:#FBE3E4;color:#A5323B;}
   .avviso{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:12px;font-size:13.5px;margin-top:12px;}
+
+  /* ---- riquadro testo email ---- */
+  .velo{position:fixed;inset:0;background:rgba(35,40,48,.45);display:flex;
+        align-items:flex-start;justify-content:center;padding:32px 16px;z-index:50;overflow:auto;}
+  .modale{background:var(--bianco);border-radius:12px;max-width:720px;width:100%;padding:24px;}
+  .modale h2{font-family:'Fraunces',serif;color:var(--bosco);font-size:19px;margin-bottom:4px;}
+  .modale textarea{width:100%;border:1px solid var(--linea);border-radius:8px;padding:12px;
+        font-family:inherit;font-size:14px;line-height:1.55;resize:vertical;}
+  .modale input[type=text]{width:100%;border:1px solid var(--linea);border-radius:8px;padding:10px 12px;font-size:14px;}
+  .modale .riga{margin-bottom:14px;}
+  .modale label{display:block;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+        color:var(--salvia);font-weight:600;margin-bottom:5px;}
+  .modale .azioni{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -115,6 +128,7 @@
     <button id="sc2">Valutazione · Stadio 2</button>
     <button id="scKo">Segnali KO</button>
     <button id="scDiv">Divergenze</button>
+    <button id="scInv">Inviti · Stadio 2</button>
   </div>
 
   <section id="vS1">
@@ -258,6 +272,39 @@
     </div>
   </section>
 
+  <!-- ============ INVITI STADIO 2 ============ -->
+  <section id="vInv" style="display:none;">
+
+    <div class="pannello">
+      <h2>Invita allo Stadio 2</h2>
+      <div class="spiega">Elenco dei candidati con esito <strong>Avanza</strong> non ancora invitati.
+      Alla creazione dell'invito lo scenario viene assegnato a rotazione e viene generato il link personale
+      da inviare al candidato.</div>
+      <table>
+        <thead><tr><th>Candidato</th><th>Area</th><th>Sede</th><th></th></tr></thead>
+        <tbody id="tbDaInvitare"></tbody>
+      </table>
+      <p class="spiega" id="daInvVuoto" style="display:none;margin-top:12px;">
+        Nessun candidato in attesa di invito.</p>
+    </div>
+
+    <div class="pannello">
+      <h2>Monitoraggio inviti</h2>
+      <div class="spiega">Il portale registra invito, primo accesso, conferma e consegna.
+      Il ritardo non blocca la consegna: resta un dato leggibile, non un filtro.</div>
+      <table>
+        <thead><tr><th>Candidato</th><th>Variante</th><th>Scenario</th><th>Stato</th>
+        <th>Termine</th><th>Link</th></tr></thead>
+        <tbody id="tbInviti"></tbody>
+      </table>
+      <p class="spiega" id="invVuoto" style="display:none;margin-top:12px;">Nessun invito creato.</p>
+      <div style="margin-top:12px;">
+        <button class="ghost" id="btnCsvInviti">Esporta CSV</button>
+        <span class="spiega" id="invMsg" style="margin-left:10px;"></span>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ DIVERGENZE ============ -->
   <section id="vDiv" style="display:none;">
     <div class="pannello">
@@ -275,6 +322,29 @@
 </div>
 
 </main>
+<div class="velo" id="veloMail" style="display:none;">
+  <div class="modale">
+    <h2>Testo dell'email di invito</h2>
+    <div class="spiega" id="mailChi"></div>
+    <div class="riga">
+      <label for="mailOgg">Oggetto</label>
+      <input type="text" id="mailOgg">
+    </div>
+    <div class="riga">
+      <label for="mailCorpo">Testo</label>
+      <textarea id="mailCorpo" rows="18"></textarea>
+      <div class="spiega" style="margin-top:6px;">Puoi modificarlo prima di copiarlo: le modifiche non vengono salvate.</div>
+    </div>
+    <div class="azioni">
+      <button id="btnCopiaMail">Copia testo</button>
+      <button class="ghost" id="btnCopiaTutto">Copia oggetto + testo</button>
+      <button class="ghost" id="btnMailto">Apri nel client di posta</button>
+      <button class="ghost" id="btnChiudiMail">Chiudi</button>
+      <span class="spiega" id="mailMsg" style="margin-left:6px;"></span>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="assets/config.js"></script>
 <script>
@@ -510,18 +580,22 @@
     el("vS2").style.display  = nome==="s2"  ? "" : "none";
     el("vKo").style.display  = nome==="ko"  ? "" : "none";
     el("vDiv").style.display = nome==="div" ? "" : "none";
+    el("vInv").style.display = nome==="inv" ? "" : "none";
     el("sc1").className   = nome==="s1"  ? "on" : "";
     el("sc2").className   = nome==="s2"  ? "on" : "";
     el("scKo").className  = nome==="ko"  ? "on" : "";
     el("scDiv").className = nome==="div" ? "on" : "";
+    el("scInv").className = nome==="inv" ? "on" : "";
     if(nome==="s2"){ avviaS2(); }
     if(nome==="ko"){ caricaKo(); }
     if(nome==="div"){ caricaDiv(); }
+    if(nome==="inv"){ caricaInviti(); }
   }
   el("sc1").addEventListener("click",   function(){ scheda2("s1"); });
   el("sc2").addEventListener("click",   function(){ scheda2("s2"); });
   el("scKo").addEventListener("click",  function(){ scheda2("ko"); });
   el("scDiv").addEventListener("click", function(){ scheda2("div"); });
+  el("scInv").addEventListener("click", function(){ scheda2("inv"); });
 
   // carica la rubrica solo la prima volta che serve
   async function avviaS2(){
@@ -750,6 +824,209 @@
     if(r.error){ alert("Non riuscito: " + r.error.message); return; }
     caricaKo();
   }
+
+  // ---------- inviti Stadio 2 ----------
+  var INVITI = [];
+
+  function urlConsegna(tok){
+    return location.origin + location.pathname.replace(/[^\/]*$/, "") + "consegna.html?t=" + tok;
+  }
+
+  async function caricaInviti(){
+    // candidati da invitare: esito 'avanza' senza invito
+    var inv = await sb.from("v_stage2_invites").select("*");
+    if(inv.error){ el("invMsg").textContent = inv.error.message; return; }
+    INVITI = inv.data || [];
+    var invitati = {};
+    INVITI.forEach(function(i){ invitati[i.candidate_id] = true; });
+
+    var cand = await sb.from("candidates").select("id,nome,cognome,area,sede,esito")
+                       .eq("esito","avanza");
+    var da = (cand.data||[]).filter(function(c){ return !invitati[c.id]; });
+
+    var t1 = el("tbDaInvitare"); t1.innerHTML = "";
+    el("daInvVuoto").style.display = da.length ? "none" : "";
+    da.forEach(function(c){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>"+esc(c.cognome||"")+" "+esc(c.nome||"")+"</strong></td>"+
+        "<td>"+(AREE[c.area]||esc(c.area||""))+"</td>"+
+        "<td>"+esc(c.sede||"")+"</td><td></td>";
+      var b = document.createElement("button");
+      b.textContent = "Crea invito";
+      b.addEventListener("click", function(){ creaInvito(c, b); });
+      tr.lastChild.appendChild(b);
+      t1.appendChild(tr);
+    });
+
+    var t2 = el("tbInviti"); t2.innerHTML = "";
+    el("invVuoto").style.display = INVITI.length ? "none" : "";
+    INVITI.forEach(function(i){
+      var cls = i.stato === "consegnato" ? "es-avanza"
+              : (i.stato === "conferma scaduta" || i.stato === "termine superato") ? "es-scarta"
+              : "es-dubbio";
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>"+esc(i.cognome||"")+" "+esc(i.nome||"")+"</strong><br>"+
+          "<span style='color:var(--grigio);font-size:12.5px;'>"+esc(i.email||"")+"</span></td>"+
+        "<td>"+esc(i.variant)+"</td>"+
+        "<td>"+esc(i.scenario_id||"—")+"</td>"+
+        "<td><span class='es "+cls+"'>"+esc(i.stato)+"</span>"+
+          (i.in_ritardo ? "<br><span style='color:var(--grigio);font-size:12px;'>consegnato in ritardo</span>" : "")+"</td>"+
+        "<td style='font-size:12.5px;'>"+(i.deadline_at ? new Date(i.deadline_at).toLocaleString("it-IT") : "—")+"</td>"+
+        "<td></td>";
+      var bm = document.createElement("button");
+      bm.textContent = "Testo email";
+      bm.addEventListener("click", function(){ apriMail(i); });
+      var b = document.createElement("button");
+      b.className = "ghost"; b.style.marginLeft = "6px"; b.textContent = "Copia link";
+      b.addEventListener("click", function(){ copiaLink(i.token, b); });
+      tr.lastChild.appendChild(bm); tr.lastChild.appendChild(b);
+      t2.appendChild(tr);
+    });
+  }
+
+  async function creaInvito(c, btn){
+    if(!confirm("Creare l'invito allo Stadio 2 per " + (c.cognome||"") + " " + (c.nome||"") + "?\n\n" +
+                "Lo scenario verrà assegnato a rotazione e non sarà più modificabile.")) return;
+    btn.disabled = true;
+    var r = await sb.rpc("crea_invito_stadio2", {p_candidate_id: c.id});
+    btn.disabled = false;
+    if(r.error){ alert("Non riuscito: " + r.error.message); return; }
+    await caricaInviti();
+    // apre subito il testo dell'email già personalizzato
+    var nuovo = null;
+    INVITI.forEach(function(x){ if(x.candidate_id === c.id) nuovo = x; });
+    if(nuovo){ apriMail(nuovo); }
+    else { copiaTesto(urlConsegna(r.data.token)); alert("Invito creato. Link copiato negli appunti."); }
+  }
+
+  function copiaTesto(t){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).catch(function(){});
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); }catch(e){}
+      document.body.removeChild(ta);
+    }
+  }
+
+  function copiaLink(tok, btn){
+    copiaTesto(urlConsegna(tok));
+    var v = btn.textContent; btn.textContent = "Copiato";
+    setTimeout(function(){ btn.textContent = v; }, 1400);
+  }
+
+  el("btnCsvInviti").addEventListener("click", function(){
+    if(!INVITI.length){ el("invMsg").textContent = "Nessun invito da esportare."; return; }
+    var col = ["cognome","nome","email","area","variant","scenario_id",
+               "invited_at","first_access_at","accepted_at","deadline_at","submitted_at","in_ritardo","stato"];
+    var righe = [col.join(";")];
+    INVITI.forEach(function(i){
+      righe.push(col.map(function(k){
+        var v = i[k]; if(v===null||v===undefined) v="";
+        return '"' + String(v).replace(/"/g,'""') + '"';
+      }).join(";"));
+    });
+    var blob = new Blob(["\ufeff"+righe.join("\n")], {type:"text/csv;charset=utf-8;"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "inviti_stadio2.csv"; a.click();
+  });
+
+  // ---------- testo email di invito ----------
+  var MAIL_DEST = "";
+
+  var CONSEGNE_LAB = {
+    SEC: ["un lesson plan di tre slot per una classe seconda",
+          "uno scenario osservativo da leggere e valutare",
+          "una verifica sommativa da progettare"],
+    PRI: ["un lesson plan di tre slot per una classe terza di primaria",
+          "una risposta scritta a una famiglia",
+          "uno scenario osservativo da leggere e valutare"],
+    ENG: ["an adaptation exercise across two age groups",
+          "an observation scenario to read and assess"]
+  };
+
+  function elenco(v){
+    var a = CONSEGNE_LAB[v] || [];
+    if(a.length < 2) return a[0] || "";
+    var cong = (v === "ENG") ? " and " : " e ";
+    return a.slice(0, -1).join(", ") + cong + a[a.length-1];
+  }
+
+  function testoEmail(inv, link){
+    var nome = (inv.nome || "").trim();
+    if(inv.variant === "ENG"){
+      return {
+        oggetto: "br-ing · Stage 2 of the selection process — your personal page",
+        corpo:
+"Dear " + nome + ",\n\n" +
+"thank you for the time you gave to the first stage. We have read your application and we are glad to invite you to Stage 2 of our selection process for the 2026/27 school year.\n\n" +
+"Stage 2 consists of two tasks: " + elenco("ENG") + ". Everything you need — the assigned material, the reference scale and the annual objectives — is already waiting on your personal page.\n\n" +
+"This is your personal link:\n" + link + "\n\n" +
+"Please open it and confirm within 24 hours that you wish to proceed. From that moment you will have three days to submit. There is no minimum length: we would rather read something short and thought through than something long and generic.\n\n" +
+"If this is not the right moment for you, just reply and let us know. It is not a problem, and we would rather hear it.\n\n" +
+"The link is personal: it carries the material assigned to you and should not be shared.\n\n" +
+"If anything is unclear, simply reply to this email.\n\n" +
+"Best regards,\nDaniele della Rosa\nbr-ing"
+      };
+    }
+    var quante = (inv.variant === "SEC" || inv.variant === "PRI") ? "tre consegne" : "due consegne";
+    return {
+      oggetto: "br-ing · Stadio 2 della selezione — la tua pagina personale",
+      corpo:
+"Ciao " + nome + ",\n\n" +
+"grazie per il tempo che hai dedicato alla prima fase. Abbiamo letto la tua candidatura e siamo lieti di invitarti allo Stadio 2 della selezione per l'anno scolastico 2026/27.\n\n" +
+"Lo Stadio 2 si compone di " + quante + ": " + elenco(inv.variant) + ". Tutto ciò che ti serve — il materiale assegnato, la scala di riferimento e gli obiettivi annuali — è già pronto nella tua pagina personale.\n\n" +
+"Questo è il tuo link personale:\n" + link + "\n\n" +
+"Ti chiediamo di aprirlo e di confermare entro 24 ore che intendi procedere. Da quel momento avrai tre giorni per la consegna. Non c'è una lunghezza minima: preferiamo un lavoro breve e pensato a uno lungo e generico.\n\n" +
+"Se in questo periodo non ti è possibile partecipare, rispondi a questa email e faccelo sapere: non è un problema, e preferiamo saperlo.\n\n" +
+"Il link è personale: contiene il materiale assegnato a te e non va condiviso.\n\n" +
+"Per qualsiasi dubbio puoi rispondere a questo messaggio.\n\n" +
+"A presto,\nDaniele della Rosa\nbr-ing"
+    };
+  }
+
+  function apriMail(inv){
+    var link = urlConsegna(inv.token);
+    var t = testoEmail(inv, link);
+    MAIL_DEST = inv.email || "";
+    el("mailChi").textContent = "Destinatario: " + (inv.cognome||"") + " " + (inv.nome||"") +
+      " · " + MAIL_DEST + " · variante " + inv.variant + " · scenario " + (inv.scenario_id||"—");
+    el("mailOgg").value = t.oggetto;
+    el("mailCorpo").value = t.corpo;
+    el("mailMsg").textContent = "";
+    el("veloMail").style.display = "flex";
+  }
+
+  el("btnChiudiMail").addEventListener("click", function(){ el("veloMail").style.display = "none"; });
+  el("veloMail").addEventListener("click", function(e){
+    if(e.target === el("veloMail")) el("veloMail").style.display = "none";
+  });
+
+  function conferma(msg){
+    el("mailMsg").textContent = msg;
+    setTimeout(function(){ el("mailMsg").textContent = ""; }, 2000);
+  }
+  el("btnCopiaMail").addEventListener("click", function(){
+    copiaTesto(el("mailCorpo").value); conferma("Testo copiato.");
+  });
+  el("btnCopiaTutto").addEventListener("click", function(){
+    copiaTesto("Oggetto: " + el("mailOgg").value + "\n\n" + el("mailCorpo").value);
+    conferma("Oggetto e testo copiati.");
+  });
+  el("btnMailto").addEventListener("click", function(){
+    var u = "mailto:" + encodeURIComponent(MAIL_DEST) +
+            "?subject=" + encodeURIComponent(el("mailOgg").value) +
+            "&body=" + encodeURIComponent(el("mailCorpo").value);
+    if(u.length > 1900){
+      copiaTesto(el("mailCorpo").value);
+      conferma("Testo troppo lungo per il client: l'ho copiato, incollalo a mano.");
+      return;
+    }
+    window.location.href = u;
+  });
 
   // ---------- divergenze ----------
   function bandaPill(b){ return "<span class='banda bd-"+b+"'>"+b+"</span>"; }

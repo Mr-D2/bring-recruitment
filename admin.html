@@ -92,6 +92,20 @@
   .v-no{background:#FBE3E4;color:#A5323B;}
   .avviso{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:12px;font-size:13.5px;margin-top:12px;}
 
+  /* ---- fit e decisione ---- */
+  .fitbar{height:8px;background:var(--linea);border-radius:4px;overflow:hidden;
+          width:110px;display:inline-block;vertical-align:middle;margin-right:8px;}
+  .fitbar i{display:block;height:100%;background:var(--bosco);}
+  .fitbar i.capped{background:#B8901F;}
+  .num{font-variant-numeric:tabular-nums;font-weight:600;}
+  .chip{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12.5px;
+        font-weight:600;background:#EFEDE3;color:#4A4F57;margin:0 4px 4px 0;}
+  .chip.warn{background:#FBF0D6;color:#8A6D16;}
+  .chip.bad{background:#FBE3E4;color:#A5323B;}
+  .chip.ok{background:#E2F3E1;color:#2E7D31;}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;}
+  .sotto{color:var(--grigio);font-size:12.5px;}
+
   /* ---- riquadro testo email ---- */
   .velo{position:fixed;inset:0;background:rgba(35,40,48,.45);display:flex;
         align-items:flex-start;justify-content:center;padding:32px 16px;z-index:50;overflow:auto;}
@@ -125,7 +139,9 @@
 
   <div class="schede">
     <button id="sc1" class="on">Candidature · Stadio 1</button>
+    <button id="scS0">Valutazione · Stadio 1</button>
     <button id="sc2">Valutazione · Stadio 2</button>
+    <button id="scFit">Fit e decisione</button>
     <button id="scKo">Segnali KO</button>
     <button id="scDiv">Divergenze</button>
     <button id="scInv">Inviti · Stadio 2</button>
@@ -316,6 +332,116 @@
         <tbody id="tbDiv"></tbody>
       </table>
       <p class="spiega" id="divVuoto" style="display:none;margin-top:12px;">Nessuna valutazione registrata finora.</p>
+    </div>
+  </section>
+
+  <!-- ============ STADIO 1 · VALUTAZIONE ============ -->
+  <section id="vS0" style="display:none;">
+
+    <div class="pannello" id="p0_lista">
+      <h2>Scegli la domanda da valutare</h2>
+      <div class="spiega">Le risposte aperte del form di candidatura. Stessa regola dello Stadio 2:
+      una domanda alla volta su tutti i candidati, non un candidato alla volta.
+      Gli altri indicatori del form (abilitazione, formazione, disponibilità, lingua, digitale)
+      sono derivati automaticamente all'invio e non passano da qui.</div>
+      <table>
+        <thead><tr><th>Sotto-criterio</th><th>Campo</th><th>Dim.</th><th>Peso</th>
+        <th>Avanzamento</th><th></th></tr></thead>
+        <tbody id="tb0Lista"></tbody>
+      </table>
+      <p class="spiega" id="lista0Vuota" style="display:none;margin-top:12px;">
+        Nessuna candidatura inviata: la coda si popola da sola quando arriva il primo form.</p>
+    </div>
+
+    <div id="p0_val" style="display:none;">
+      <div class="pannello">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="ghost" id="btn0Indietro">&larr; Cambia domanda</button>
+          <strong id="sub0Tit" style="flex:1;"></strong>
+          <span style="color:var(--grigio);font-size:13.5px;" id="avanz0"></span>
+        </div>
+        <div class="barra2"><i id="barra0" style="width:0%"></i></div>
+      </div>
+
+      <div class="pannello">
+        <div class="spiega">Candidato <strong id="pseudo0"></strong> &middot; <span id="meta0"></span><br>
+        L'identità è mascherata di proposito: valuti la risposta, non la persona.</div>
+        <div class="elab" id="elab0"></div>
+      </div>
+
+      <div class="pannello" id="p0_bande">
+        <h2>La tua valutazione</h2>
+        <div class="spiega" id="descr0"></div>
+        <div class="quattro">
+          <button data-bd0="assente">Assente</button>
+          <button data-bd0="debole">Debole</button>
+          <button data-bd0="adeguato">Adeguato</button>
+          <button data-bd0="forte">Forte</button>
+        </div>
+        <div class="msg" id="val0Err"></div>
+      </div>
+
+      <div class="pannello" id="p0_dopo" style="display:none;">
+        <h2>Registrata</h2>
+        <div class="duecol">
+          <div><div class="spiega" style="margin:0;">La tua valutazione</div>
+               <div style="margin-top:6px;"><span class="banda" id="c0H"></span></div></div>
+          <div><div class="spiega" style="margin:0;">Proposta AI <span id="c0Mod" style="font-size:12px;"></span></div>
+               <div style="margin-top:6px;"><span class="banda" id="c0A"></span></div></div>
+        </div>
+        <div class="verdetto" id="c0Verd"></div>
+        <div style="margin-top:14px;">
+          <button id="btn0Avanti">Candidato successivo &rarr;</button>
+          <button class="ghost" id="btn0Correggi">Correggi la mia banda</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FIT E DECISIONE ============ -->
+  <section id="vFit" style="display:none;">
+
+    <div class="pannello">
+      <h2>Fit e decisione</h2>
+      <div class="spiega">Il fit si ricalcola da solo a ogni banda registrata.
+      Il tetto non è una penalità sulla media: è un limite che la media non può superare.
+      La copertura dice quanta parte del peso della variante è coperta da evidenza:
+      un fit alto con copertura bassa è un fit provvisorio.</div>
+      <div class="filtri">
+        <select id="f0_area">
+          <option value="">Tutte le aree</option>
+          <option value="lettere">Lettere</option>
+          <option value="musica">Musica</option>
+          <option value="matsci">Matematica e Scienze</option>
+          <option value="primaria">Primaria</option>
+          <option value="inglese">Inglese</option>
+        </select>
+        <select id="f0_filtro">
+          <option value="">Tutti i candidati</option>
+          <option value="scorati">Solo con un fit calcolato</option>
+          <option value="tetto">Solo con tetto attivo</option>
+          <option value="ko">Solo con segnale KO da decidere</option>
+        </select>
+        <button class="ghost" id="btnFitAgg">Aggiorna</button>
+        <button class="ghost" id="btnFitCsv">Esporta CSV</button>
+        <span class="spiega" id="fitMsg" style="margin-left:6px;"></span>
+      </div>
+      <table>
+        <thead><tr><th>Candidato</th><th>Area</th><th>Var.</th><th>Fit</th>
+        <th>Tetto</th><th>Copertura</th><th>Segnali</th></tr></thead>
+        <tbody id="tbFit"></tbody>
+      </table>
+      <p class="spiega" id="fitVuoto" style="display:none;margin-top:12px;">
+        Nessun candidato da mostrare con questi filtri.</p>
+    </div>
+
+    <div class="pannello" id="p_fitDett" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+        <h2 id="fdNome" style="flex:1;margin:0;"></h2>
+        <button class="ghost" id="btnFdChiudi">Chiudi</button>
+      </div>
+      <div class="spiega" id="fdMeta"></div>
+      <div id="fdCorpo"></div>
     </div>
   </section>
 
@@ -577,21 +703,29 @@
 
   function scheda2(nome){
     el("vS1").style.display  = nome==="s1"  ? "" : "none";
+    el("vS0").style.display  = nome==="s0"  ? "" : "none";
     el("vS2").style.display  = nome==="s2"  ? "" : "none";
     el("vKo").style.display  = nome==="ko"  ? "" : "none";
     el("vDiv").style.display = nome==="div" ? "" : "none";
     el("vInv").style.display = nome==="inv" ? "" : "none";
+    el("vFit").style.display = nome==="fit" ? "" : "none";
     el("sc1").className   = nome==="s1"  ? "on" : "";
+    el("scS0").className  = nome==="s0"  ? "on" : "";
     el("sc2").className   = nome==="s2"  ? "on" : "";
     el("scKo").className  = nome==="ko"  ? "on" : "";
     el("scDiv").className = nome==="div" ? "on" : "";
     el("scInv").className = nome==="inv" ? "on" : "";
+    el("scFit").className = nome==="fit" ? "on" : "";
+    if(nome==="s0"){ caricaLista0(); }
     if(nome==="s2"){ avviaS2(); }
     if(nome==="ko"){ caricaKo(); }
     if(nome==="div"){ caricaDiv(); }
     if(nome==="inv"){ caricaInviti(); }
+    if(nome==="fit"){ caricaFit(); }
   }
   el("sc1").addEventListener("click",   function(){ scheda2("s1"); });
+  el("scS0").addEventListener("click",  function(){ scheda2("s0"); });
+  el("scFit").addEventListener("click", function(){ scheda2("fit"); });
   el("sc2").addEventListener("click",   function(){ scheda2("s2"); });
   el("scKo").addEventListener("click",  function(){ scheda2("ko"); });
   el("scDiv").addEventListener("click", function(){ scheda2("div"); });
@@ -1047,6 +1181,389 @@
       t.appendChild(tr);
     });
   }
+
+  // ==========================================================
+  // STADIO 1 — coda di valutazione per domanda
+  // Legge v_stage1_queue (solo i sotto-criteri mode='human': i derivati
+  // sono gia scritti da derive_stage1_scores all'invio del form).
+  // Il testo da leggere sta in candidates.stage1_answers, indicizzato
+  // dal campo `fonte` del sotto-criterio: la consegna 'stage1' e solo
+  // il contenitore che regge gli scoring_events.
+  // ==========================================================
+  var coda0 = [], idx0 = 0, sub0 = null, risposte0 = {};
+
+  var NOTA0 = {
+    st1_c1_strategia:   "Attivita costruita sulla strategia metacognitiva assegnata. Conta se la strategia struttura l'attivita o se e solo nominata.",
+    st1_c2_valutazione: "Situazione: distinzione fra formativo e sommativo. Conta la ragione della scelta, non l'etichetta.",
+    st1_c3_differenziazione: "Situazione: differenziazione. Domanda cardine, il livello piu basso attiva il tetto sul fit. Conta se la differenziazione e strutturale o cosmetica.",
+    st1_b2_progettualita: "Percorso professionale a tre anni. Conta la concretezza della traiettoria, non l'ambizione dichiarata.",
+    st1_b3_motivazione: "Perche una paritaria bilingue. Conta se la risposta e riferita a questa scuola o e trasferibile a qualsiasi istituto.",
+    st1_e1_laboratorio: "Proposta di laboratorio pomeridiano. Segnala iniziativa oltre il mansionario.",
+    st1_engp_lingua:   "Qualita linguistica dello scritto in inglese: registro, accuratezza, naturalezza.",
+    st1_engp_metodo:   "Contenuto metodologico dello stesso scritto, indipendentemente dalla lingua.",
+    st1_g1_fasce_eta:  "Bambini e preadolescenti: cambiano le operazioni cognitive o cambia solo il lessico?"
+  };
+
+  function raggruppa0(righe){
+    var m = {}, ordine = [];
+    righe.forEach(function(r){
+      if(!m[r.subcriterion_id]){
+        m[r.subcriterion_id] = {subcriterion_id:r.subcriterion_id, label:r.label, fonte:r.fonte,
+                                dimension:r.dimension, weight_role:r.weight_role, ordine:r.ordine,
+                                totale:0, valutate:0, righe:[]};
+        ordine.push(m[r.subcriterion_id]);
+      }
+      var g = m[r.subcriterion_id];
+      g.totale++; if(r.human_done) g.valutate++;
+      g.righe.push(r);
+    });
+    ordine.sort(function(a,b){ return a.ordine - b.ordine; });
+    return ordine;
+  }
+
+  async function caricaLista0(){
+    el("p0_lista").style.display = ""; el("p0_val").style.display = "none";
+    var t = el("tb0Lista"); t.innerHTML = "<tr><td colspan='6'>Carico…</td></tr>";
+    var r = await sb.from("v_stage1_queue").select("*");
+    if(r.error){
+      t.innerHTML = "<tr><td colspan='6' class='msg'>" + esc(r.error.message) +
+        "<br>Hai eseguito il blocco Stadio 1 nel SQL Editor?</td></tr>"; return;
+    }
+    var gruppi = raggruppa0(r.data || []);
+    t.innerHTML = "";
+    el("lista0Vuota").style.display = gruppi.length ? "none" : "";
+    gruppi.forEach(function(g){
+      var pct = g.totale ? Math.round(g.valutate*100/g.totale) : 0;
+      var resta = g.totale - g.valutate;
+      var tr = document.createElement("tr");
+      tr.className = "riga-cand";
+      tr.innerHTML =
+        "<td><strong>" + esc(g.label) + "</strong><div class='sotto'>" + esc(g.subcriterion_id) + "</div></td>" +
+        "<td>" + esc(g.fonte) + "</td>" +
+        "<td>Dim." + esc(g.dimension) + "</td>" +
+        "<td class='sotto'>" + esc(g.weight_role) + "</td>" +
+        "<td>" + g.valutate + " / " + g.totale +
+          "<div class='barra2'><i style='width:" + pct + "%'></i></div></td>" +
+        "<td>" + (resta ? "<button class='ghost'>Valuta</button>"
+                        : "<span style='color:var(--grigio);font-size:13px;'>completato</span>") + "</td>";
+      tr.addEventListener("click", function(){ apriSub0(g); });
+      t.appendChild(tr);
+    });
+  }
+
+  async function apriSub0(g){
+    coda0 = g.righe.filter(function(x){ return !x.human_done; });
+    if(!coda0.length){ alert("Questa domanda è già stata valutata su tutti i candidati."); return; }
+    sub0 = g; idx0 = 0;
+
+    // le risposte aperte in un colpo solo, poi tenute in memoria per la sessione
+    var ids = coda0.map(function(x){ return x.candidate_id; });
+    var r = await sb.from("candidates").select("id,stage1_answers").in("id", ids);
+    if(r.error){ alert("Non riesco a leggere le risposte: " + r.error.message); return; }
+    risposte0 = {};
+    (r.data||[]).forEach(function(c){ risposte0[c.id] = c.stage1_answers || {}; });
+
+    el("p0_lista").style.display = "none"; el("p0_val").style.display = "";
+    el("sub0Tit").textContent = g.label;
+    mostraCand0();
+  }
+  el("btn0Indietro").addEventListener("click", caricaLista0);
+
+  function mostraCand0(){
+    el("p0_dopo").style.display = "none"; el("p0_bande").style.display = "";
+    el("val0Err").textContent = "";
+    var q = coda0[idx0];
+    var fatte = sub0.valutate + idx0;
+    el("avanz0").textContent = (idx0+1) + " di " + coda0.length + " da valutare";
+    el("barra0").style.width = Math.round(fatte*100/sub0.totale) + "%";
+    el("pseudo0").textContent = q.pseudonym || "(senza pseudonimo)";
+    el("meta0").textContent = (AREE[q.area] || q.area || "") + " · " + (q.variant || "") +
+                              " · campo " + (sub0.fonte || "");
+    var val = (risposte0[q.candidate_id] || {})[sub0.fonte];
+    el("elab0").textContent = (val === undefined || val === null || val === "")
+      ? "(nessuna risposta registrata per il campo " + sub0.fonte + ")"
+      : renderContenuto2(val);
+    el("descr0").textContent = NOTA0[sub0.subcriterion_id] ||
+      ("Dimensione " + sub0.dimension + " · peso " + sub0.weight_role + ".");
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".quattro button[data-bd0]"), function(b){
+    b.addEventListener("click", function(){ registra0(b.getAttribute("data-bd0")); });
+  });
+
+  async function registra0(banda){
+    el("val0Err").textContent = "";
+    var q = coda0[idx0];
+    // dimension e weight_role arrivano dalla vista: per lo Stadio 1 sono
+    // proprieta del sotto-criterio, non della consegna.
+    var r = await sb.rpc("record_human_score", {
+      p_consegna_id:     q.consegna_id,
+      p_subcriterion_id: q.subcriterion_id,
+      p_dimension:       String(q.dimension),
+      p_weight_role:     q.weight_role,
+      p_band:            banda
+    });
+    if(r.error){ el("val0Err").textContent = "Registrazione non riuscita: " + r.error.message; return; }
+    dopo0(r.data);
+  }
+
+  function dopo0(d){
+    el("p0_bande").style.display = "none"; el("p0_dopo").style.display = "";
+    var hb = d.human.band;
+    el("c0H").className = "banda bd-" + hb; el("c0H").textContent = hb;
+    var v = el("c0Verd");
+    if(!d.ai){
+      el("c0A").className = "banda"; el("c0A").textContent = "non prevista";
+      el("c0Mod").textContent = "";
+      v.className = "verdetto v-vicino";
+      v.textContent = "Lo Stadio 1 non ha pre-scoring AI: le risposte del form le leggi tu. " +
+                      "Il fit si è già ricalcolato.";
+      return;
+    }
+    var ab = d.ai.band;
+    el("c0A").className = "banda bd-" + ab; el("c0A").textContent = ab;
+    el("c0Mod").textContent = "(" + (d.ai.model_version || "") + ")";
+    var scarto = Math.abs(ORD2[hb] - ORD2[ab]);
+    if(scarto === 0){ v.className = "verdetto v-si"; v.textContent = "Accordo pieno."; }
+    else if(scarto === 1){ v.className = "verdetto v-vicino";
+      v.textContent = "Scarto di un livello: fisiologico."; }
+    else { v.className = "verdetto v-no";
+      v.textContent = "Scarto di " + scarto + " livelli: vale la pena rileggere."; }
+  }
+
+  el("btn0Correggi").addEventListener("click", function(){
+    el("p0_dopo").style.display = "none"; el("p0_bande").style.display = "";
+    el("val0Err").textContent = "";
+  });
+  el("btn0Avanti").addEventListener("click", function(){
+    idx0++;
+    if(idx0 >= coda0.length){ alert("Domanda completata su tutti i candidati."); caricaLista0(); return; }
+    mostraCand0();
+  });
+
+
+  // ==========================================================
+  // FIT E DECISIONE — legge v_candidate_fit (patch v1.2)
+  // La vista e pseudonimizzata: nome e cognome si ricongiungono qui,
+  // dove servono per decidere e non per valutare.
+  // ==========================================================
+  var FIT = [], ANAG = {}, FLAGLAB = {};
+
+  function pct(v){ return (v === null || v === undefined) ? "—" : (Math.round(v*10)/10) + ""; }
+
+  function barraFit(f){
+    var v = (f.fit === null || f.fit === undefined) ? 0 : Number(f.fit);
+    return "<span class='fitbar'><i class='" + (f.tetto_applicato ? "capped" : "") +
+           "' style='width:" + Math.max(0, Math.min(100, v)) + "%'></i></span>" +
+           "<span class='num'>" + pct(f.fit) + "</span>";
+  }
+
+  async function caricaFit(){
+    el("p_fitDett").style.display = "none";
+    el("fitMsg").textContent = "";
+    var t = el("tbFit"); t.innerHTML = "<tr><td colspan='7'>Carico…</td></tr>";
+
+    if(!Object.keys(FLAGLAB).length){
+      var rl = await sb.from("redflag_registry").select("flag_key,label,cap,note");
+      if(!rl.error){ (rl.data||[]).forEach(function(x){ FLAGLAB[x.flag_key] = x; }); }
+    }
+    if(!rubrica2){
+      var rr = await sb.rpc("get_eval_rubric");
+      if(!rr.error) rubrica2 = rr.data;
+    }
+
+    var ra = await sb.from("candidates").select("id,nome,cognome,email,area,sede,esito,status");
+    if(!ra.error){ ANAG = {}; (ra.data||[]).forEach(function(c){ ANAG[c.id] = c; }); }
+
+    var r = await sb.from("v_candidate_fit").select("*");
+    if(r.error){
+      t.innerHTML = "<tr><td colspan='7' class='msg'>" + esc(r.error.message) +
+        "<br>Hai eseguito <strong>patch_v_candidate_fit_v1_2.sql</strong> nel SQL Editor?</td></tr>";
+      return;
+    }
+    FIT = r.data || [];
+    renderFit();
+  }
+
+  function renderFit(){
+    var area = el("f0_area").value, filtro = el("f0_filtro").value;
+    var righe = FIT.filter(function(f){
+      var a = ANAG[f.candidate_id] || {};
+      if(area && f.area !== area) return false;
+      if(a.status === "in_compilazione") return false;
+      if(filtro === "scorati" && (f.fit === null || f.fit === undefined)) return false;
+      if(filtro === "tetto" && !f.tetto_applicato) return false;
+      if(filtro === "ko" && !f.ko_da_decidere) return false;
+      return true;
+    });
+    righe.sort(function(a,b){
+      var x = (a.fit === null ? -1 : Number(a.fit)), y = (b.fit === null ? -1 : Number(b.fit));
+      return y - x;
+    });
+
+    var t = el("tbFit"); t.innerHTML = "";
+    el("fitVuoto").style.display = righe.length ? "none" : "";
+    righe.forEach(function(f){
+      var a = ANAG[f.candidate_id] || {};
+      var segnali = "";
+      if(f.ko_da_decidere) segnali += "<span class='chip bad'>KO da decidere</span>";
+      else if(f.ko_confermato) segnali += "<span class='chip bad'>KO confermato</span>";
+      else if(f.ko_segnale) segnali += "<span class='chip ok'>prosegue</span>";
+      if(f.flag_statale) segnali += "<span class='chip'>statale " + esc(f.flag_statale) + "</span>";
+
+      var tetto = f.tetto_applicato
+        ? "<span class='chip warn'>" + pct(f.tetto_valore) + "</span>" +
+          "<div class='sotto'>da " + pct(f.fit_senza_tetto) + "</div>"
+        : "<span style='color:var(--grigio);'>—</span>";
+
+      var cop = (f.copertura_pesi === null || f.copertura_pesi === undefined)
+        ? "—" : pct(f.copertura_pesi) + "%";
+
+      var tr = document.createElement("tr");
+      tr.className = "riga-cand";
+      tr.innerHTML =
+        "<td><strong>" + esc((a.cognome||"") + " " + (a.nome||"")) + "</strong>" +
+          "<div class='sotto'>" + esc(f.pseudonym||"") + "</div></td>" +
+        "<td>" + (AREE[f.area] || esc(f.area||"")) + "</td>" +
+        "<td>" + esc(f.variant || "—") + "</td>" +
+        "<td>" + barraFit(f) + "</td>" +
+        "<td>" + tetto + "</td>" +
+        "<td class='n'>" + cop + "</td>" +
+        "<td>" + (segnali || "<span style='color:var(--grigio);'>—</span>") + "</td>";
+      tr.addEventListener("click", function(){ dettaglioFit(f); });
+      t.appendChild(tr);
+    });
+    el("fitMsg").textContent = righe.length + " candidati";
+  }
+
+  el("f0_area").addEventListener("change", renderFit);
+  el("f0_filtro").addEventListener("change", renderFit);
+  el("btnFitAgg").addEventListener("click", caricaFit);
+  el("btnFdChiudi").addEventListener("click", function(){
+    el("p_fitDett").style.display = "none";
+  });
+
+  function dettaglioFit(f){
+    var a = ANAG[f.candidate_id] || {};
+    el("p_fitDett").style.display = "";
+    el("fdNome").textContent = (a.cognome||"") + " " + (a.nome||"");
+    el("fdMeta").textContent = (AREE[f.area]||f.area||"") + " · variante " + (f.variant||"—") +
+      " · " + (a.sede||"") + " · " + (f.pseudonym||"") +
+      (f.ricalcolato_il ? " · ricalcolato il " + new Date(f.ricalcolato_il).toLocaleString("it-IT") : "");
+
+    var dims = (rubrica2 && rubrica2.schema && rubrica2.schema.dimensions) || {};
+    var fin = f.dim_finali || {}, s1 = f.dim_stadio1 || {}, s2 = f.dim_stadio2 || {};
+    var chiavi = Object.keys(dims).length ? Object.keys(dims) : Object.keys(fin);
+    chiavi.sort(function(x,y){ return Number(x) - Number(y); });
+
+    var h = "";
+
+    // ---- tetto ----
+    if(f.tetto_applicato){
+      var da = f.tetto_attivo_da || [];
+      var lab = da.map(function(k){
+        var x = FLAGLAB[k];
+        return x ? (x.label + " — tetto " + x.cap + (x.note ? ". " + x.note : "")) : k;
+      });
+      h += "<div class='avviso'><strong>Tetto attivo: " + pct(f.tetto_valore) + "</strong><br>" +
+           "Il fit calcolato sarebbe " + pct(f.fit_senza_tetto) + ". Ragione:<br>" +
+           lab.map(function(s){ return "· " + esc(s); }).join("<br>") +
+           "<br><span class='sotto'>Il tetto cade da solo se una banda umana di Stadio 2 " +
+           "sullo stesso oggetto risulta adeguato o forte.</span></div>";
+    } else if(f.fit !== null && f.fit !== undefined){
+      h += "<div class='spiega' style='margin-top:10px;'>Nessun tetto attivo.</div>";
+    }
+
+    // ---- KO ----
+    if(f.ko_segnale || f.ko_confermato){
+      h += "<div class='azioni'><div class='titolo'>Segnale KO</div>";
+      h += "<div style='font-size:14px;'>" + esc(f.ko_segnale_motivo || "—") + "</div>";
+      if(f.ko_confirmed_at){
+        h += "<div class='sotto' style='margin-top:6px;'>" +
+             (f.ko_confermato ? "KO confermato" : "Prosegue nonostante il segnale") +
+             " da " + esc(f.ko_confirmed_by || "—") + " il " +
+             new Date(f.ko_confirmed_at).toLocaleString("it-IT") +
+             (f.ko_motivo ? " — " + esc(f.ko_motivo) : "") + "</div>";
+      } else {
+        h += "<div class='sotto' style='margin:8px 0;'>Il segnale non esclude nessuno: " +
+             "l'esclusione è una decisione esplicita e tracciata (autorizzazione art. 29). " +
+             "Finché non decidi, il fit resta quello calcolato.</div>" +
+             "<div id='fdKoBtn'></div>";
+      }
+      h += "</div>";
+    }
+
+    // ---- copertura ----
+    h += "<div class='spiega' style='margin-top:12px;'>Copertura dei pesi: <strong>" +
+         pct(f.copertura_pesi) + "%</strong> del peso della variante è coperto da evidenza registrata. " +
+         "Il fit è la media pesata sulle sole dimensioni coperte.</div>";
+
+    // ---- dimensioni ----
+    h += "<table style='margin-top:8px;'><thead><tr><th>Dimensione</th><th>Peso</th>" +
+         "<th>Stadio 1</th><th>Stadio 2</th><th>Finale</th></tr></thead><tbody>";
+    chiavi.forEach(function(k){
+      var d = dims[k] || {};
+      var peso = (d.weights && f.variant) ? d.weights[f.variant] : null;
+      if(peso === 0) return;
+      var v1 = s1[k], v2 = s2[k], vf = fin[k];
+      h += "<tr><td>Dim." + esc(k) + (d.name ? " · " + esc(d.name) : "") + "</td>" +
+           "<td class='n'>" + (peso === null || peso === undefined ? "—" : peso) + "</td>" +
+           "<td class='n'>" + (v1 === null || v1 === undefined ? "—" : pct(v1)) + "</td>" +
+           "<td class='n'>" + (v2 === null || v2 === undefined ? "—" : pct(v2)) + "</td>" +
+           "<td class='n'><strong>" + (vf === null || vf === undefined ? "—" : pct(vf)) + "</strong></td></tr>";
+    });
+    h += "</tbody></table>";
+    h += "<div class='spiega' style='margin-top:8px;'>Una dimensione senza valore non è uno zero: " +
+         "è assenza di evidenza, e resta fuori dalla media invece di abbassarla.</div>";
+
+    el("fdCorpo").innerHTML = h;
+
+    // il bottone di conferma KO va agganciato dopo l'innerHTML
+    var slot = el("fdKoBtn");
+    if(slot){
+      var k = {candidate_id: f.candidate_id, nome: a.nome, cognome: a.cognome};
+      var b1 = document.createElement("button");
+      b1.className = "danger"; b1.textContent = "Conferma KO";
+      b1.addEventListener("click", function(){ decidiKoFit(k); });
+      var b2 = document.createElement("button");
+      b2.className = "ghost"; b2.style.marginLeft = "6px"; b2.textContent = "Prosegue";
+      b2.addEventListener("click", function(){ decidiKoFit(k, true); });
+      slot.appendChild(b1); slot.appendChild(b2);
+    }
+  }
+
+  async function decidiKoFit(k, prosegue){
+    var conferma = !prosegue;
+    var chi = (k.cognome||"") + " " + (k.nome||"");
+    var testo = conferma
+      ? "Confermi il KO per " + chi + "?\n\nIl fit va a zero. Viene registrato con il tuo nome e la data."
+      : "Confermi che " + chi + " prosegue nonostante il segnale?";
+    if(!confirm(testo)) return;
+    var motivo = prompt("Motivazione (obbligatoria, resta agli atti):", "");
+    if(motivo === null || !motivo.trim()){ alert("Serve una motivazione."); return; }
+    var r = await sb.rpc("confirm_ko", {
+      p_candidate_id: k.candidate_id, p_confirm: conferma, p_reason: motivo.trim() });
+    if(r.error){ alert("Non riuscito: " + r.error.message); return; }
+    caricaFit();
+  }
+
+  el("btnFitCsv").addEventListener("click", function(){
+    var righe = [["cognome","nome","area","variante","fit","fit_senza_tetto","tetto_applicato",
+                  "tetto_valore","tetto_da","copertura_pesi","ko_segnale","ko_confermato","flag_statale"]];
+    FIT.forEach(function(f){
+      var a = ANAG[f.candidate_id] || {};
+      righe.push([a.cognome||"", a.nome||"", AREE[f.area]||f.area||"", f.variant||"",
+                  f.fit==null?"":f.fit, f.fit_senza_tetto==null?"":f.fit_senza_tetto,
+                  f.tetto_applicato?"si":"no", f.tetto_valore==null?"":f.tetto_valore,
+                  (f.tetto_attivo_da||[]).join(" "), f.copertura_pesi==null?"":f.copertura_pesi,
+                  f.ko_segnale?"si":"no", f.ko_confermato?"si":"no", f.flag_statale||""]);
+    });
+    var csv = righe.map(function(r){ return r.map(function(v){
+      return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "fit_candidati.csv"; a.click();
+  });
 
   avvia();
 })();

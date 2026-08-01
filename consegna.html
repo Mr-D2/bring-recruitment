@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stadio 2 — br-ing</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bosco:#2B4093;--salvia:#5C6BAE;--oro:#67C064;--carta:#F8F7F4;--bianco:#fff;
+        --inchiostro:#232830;--grigio:#6B7076;--linea:#E4E2DA;--errore:#DB4B54;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:15.5px;line-height:1.6;
+       color:var(--inchiostro);background:var(--carta);}
+  header{background:var(--bosco);color:var(--carta);padding:16px 20px;}
+  .wordmark{font-family:'Fraunces',serif;font-weight:600;font-size:20px;}
+  .wordmark span{color:var(--oro);}
+  main{max-width:780px;margin:0 auto;padding:26px 20px 90px;}
+  h1{font-family:'Fraunces',serif;color:var(--bosco);font-size:24px;margin-bottom:10px;}
+  h2{font-family:'Fraunces',serif;color:var(--bosco);font-size:19px;margin-bottom:8px;}
+  h3{font-size:15.5px;margin-bottom:6px;}
+  p{margin-bottom:12px;}
+  input,select,textarea,button{font:inherit;}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--linea);
+        border-radius:6px;background:var(--bianco);}
+  textarea{min-height:130px;resize:vertical;}
+  button{padding:11px 20px;border-radius:6px;border:none;background:var(--bosco);
+         color:var(--carta);font-weight:600;cursor:pointer;width:auto;}
+  button:disabled{background:#9AA3C4;cursor:default;}
+  button.ghost{background:none;color:var(--bosco);border:1px solid var(--linea);}
+  .card{background:var(--bianco);border:1px solid var(--linea);border-radius:10px;
+        padding:22px;margin-bottom:18px;}
+  .accesso{max-width:420px;margin:60px auto;}
+  .riquadro{background:var(--carta);border-left:4px solid var(--oro);border-radius:6px;
+            padding:14px 16px;margin:12px 0;}
+  .riquadro .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+               color:var(--salvia);font-weight:600;margin-bottom:4px;}
+  .scad{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:14px 16px;margin-bottom:18px;}
+  .scad.urgente{background:#FBE3E4;border-color:#E9BFC1;}
+  .oss{background:var(--carta);border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+  .oss .n{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--salvia);font-weight:600;margin-bottom:6px;}
+  .campo{margin-bottom:16px;}
+  label{display:block;font-weight:500;margin-bottom:6px;}
+  .aiuto{color:var(--grigio);font-size:13.5px;margin-bottom:8px;}
+  .msg{color:var(--errore);font-size:14px;margin-top:8px;}
+  .ok{color:#2E7D31;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;}
+  th,td{padding:8px 9px;border-bottom:1px solid var(--linea);text-align:left;vertical-align:top;}
+  th{background:#EFEDE3;font-size:12.5px;}
+  details{border:1px solid var(--linea);border-radius:8px;padding:12px 14px;margin-bottom:14px;background:var(--bianco);}
+  summary{cursor:pointer;font-weight:600;color:var(--bosco);}
+  .stato-consegna{font-size:13px;color:var(--grigio);margin-top:6px;}
+  .fatto{color:#2E7D31;font-weight:600;}
+  .barra-fin{position:sticky;bottom:0;background:var(--bianco);border-top:1px solid var(--linea);
+             padding:14px 20px;margin:0 -20px -90px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<header><div class="wordmark">br-ing<span>.</span> · Stadio 2</div></header>
+<main>
+
+<!-- ===== ACCESSO ===== -->
+<div class="card accesso" id="accesso">
+  <h1>La tua pagina personale</h1>
+  <p class="aiuto">Inserisci l'indirizzo email con cui ti sei candidato. Il tuo identificativo è già nel link che hai ricevuto: non serve creare alcun account.</p>
+  <div class="campo">
+    <label for="ac_email">Email</label>
+    <input type="email" id="ac_email" autocomplete="email">
+  </div>
+  <div class="campo" id="c_token" style="display:none;">
+    <label for="ac_token">Identificativo</label>
+    <input type="text" id="ac_token" placeholder="S2-XXXXXXXXXXXXXXXX">
+  </div>
+  <button id="btnEntra">Entra</button>
+  <div class="msg" id="ac_msg"></div>
+</div>
+
+<!-- ===== PORTALE ===== -->
+<div id="portale" style="display:none;">
+
+  <h1 id="salve"></h1>
+
+  <!-- conferma di accettazione -->
+  <div class="card" id="boxAccetta" style="display:none;">
+    <h2>Confermi di procedere?</h2>
+    <p>Ti chiediamo di confermare entro <strong>24 ore</strong> dall'invito. Da quel momento hai <strong>tre giorni</strong> per la consegna: il termine esatto comparirà qui.</p>
+    <p class="aiuto">Prima di confermare puoi leggere le consegne qui sotto. Il conteggio parte solo quando premi il pulsante.</p>
+    <button id="btnAccetta">Confermo e procedo</button>
+    <div class="msg" id="acc_msg"></div>
+  </div>
+
+  <div class="scad" id="boxScad" style="display:none;"></div>
+
+  <!-- riferimenti assegnati -->
+  <div class="card" id="boxRif">
+    <h2>I tuoi riferimenti</h2>
+    <p class="aiuto">Assegnati a te: vanno usati nelle consegne che li richiedono.</p>
+    <div id="rif"></div>
+  </div>
+
+  <!-- vincoli comuni -->
+  <div class="card">
+    <h2>Come si consegna</h2>
+    <p>Il <strong>lesson plan</strong> si carica come file, perché nasce dal template allegato: scaricalo, compilalo e caricalo in formato PDF o Word. <strong>Le altre consegne si scrivono direttamente qui</strong>, nei campi di questa pagina.</p>
+    <p>Il lavoro si salva mentre procedi: puoi chiudere la pagina e riprendere dallo stesso link. Nulla viene inviato in via definitiva finché non premi il pulsante finale.</p>
+    <p>Non c'è una lunghezza minima. Preferiamo un lavoro breve e pensato a uno lungo e generico.</p>
+    <p>Se hai usato strumenti di intelligenza artificiale, indicalo nell'apposito campo in fondo e spiega brevemente per che cosa. Usarli non è penalizzante; non dichiararlo sì.</p>
+    <p><a href="Template_Lesson_Plan_br-ing.docx" download><button class="ghost" type="button">Scarica il template di lesson plan</button></a></p>
+  </div>
+
+  <!-- scala dei livelli -->
+  <details id="boxLivelli">
+    <summary>La scala dei sei livelli formativi br-ing (ti serve per lo scenario osservativo)</summary>
+    <div id="livelli"></div>
+  </details>
+
+  <!-- consegne -->
+  <div id="consegne"></div>
+
+  <!-- dichiarazione AI + invio -->
+  <div class="card" id="boxFinale" style="display:none;">
+    <h2>Prima di inviare</h2>
+    <div class="campo">
+      <label for="ai_dich">Hai usato strumenti di intelligenza artificiale?</label>
+      <div class="aiuto">Indica per che cosa. Se non li hai usati, scrivilo.</div>
+      <textarea id="ai_dich" style="min-height:80px;"></textarea>
+    </div>
+    <p class="aiuto">L'invio definitivo chiude la consegna: dopo non sarà più possibile modificare.</p>
+    <button id="btnInvia">Invia in via definitiva</button>
+    <div class="msg" id="inv_msg"></div>
+  </div>
+
+  <div class="card" id="boxChiuso" style="display:none;">
+    <h2>Consegna ricevuta</h2>
+    <p id="chiusoTxt"></p>
+    <p class="aiuto">Ti ricontatteremo con l'esito. Grazie per il lavoro che hai dedicato a questa prova.</p>
+  </div>
+
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  var TOKEN = new URLSearchParams(location.search).get("t") || "";
+  var EMAIL = "", DATI = null, BOZZA = {};
+
+  if(!TOKEN) el("c_token").style.display = "";
+
+  var LIVELLI = [
+    ["Struggling", 5, "Ha bisogno di supporto didattico esplicito, interno alle attività ed esterno dall'insegnante, raggiungendo l'obiettivo ancora con discontinuità."],
+    ["Entering", 6, "Ha ancora bisogno di supporto esplicito, interno ed esterno, raggiungendo l'obiettivo con continuità."],
+    ["Emerging", 7, "Ha ancora bisogno di supporto esplicito, ma emergono frammenti di strategie di approfondimento; raggiunge l'obiettivo con continuità."],
+    ["Transitioning", 8, "Ha bisogno di supporto esplicito interno alle attività, ma si rileva una transizione verso strategie di approfondimento e frammenti di generalizzazione."],
+    ["Expanding", 9, "Non ha bisogno di supporto esplicito; si rileva un'espansione nell'uso di strategie di approfondimento e generalizzazione in modo implicito."],
+    ["Commanding", 10, "Non ha bisogno di supporto esplicito e agisce attivamente sui contenuti con strategie di approfondimento, generalizzazione e inferenza."]
+  ];
+
+  // ---------- definizione delle consegne per variante ----------
+  var TESTI = {
+    lesson_plan: {
+      SEC: "Progetta un percorso di tre slot per una classe seconda della tua area, usando il template allegato. Il percorso deve fare perno sull'obiettivo annuale indicato qui sopra e deve incorporare la strategia metacognitiva e il topic Global Perspectives che ti sono stati assegnati. Compila anche le due sezioni finali del template: la differenziazione su tre profili all'interno dello stesso slot, e il momento valutativo.",
+      PRI: "Progetta un percorso di tre slot per una classe terza di primaria, usando il template allegato. Il percorso deve incorporare la strategia metacognitiva e il topic Global Perspectives che ti sono stati assegnati. Compila anche le due sezioni finali del template: la differenziazione su tre profili all'interno dello stesso slot, e il momento valutativo."
+    },
+    verifica_sommativa: {
+      SEC: "Progetta una verifica sommativa per la tua area, riferita all'obiettivo annuale di classe seconda indicato sopra e costruita per competenze, non per contenuti. Includi la consegna così come la leggerebbe lo studente. Descrivi poi, rispetto a questa tua prova, che cosa fa un elaborato da 5 e che cosa fa un elaborato da 8. Indica infine quale parte della prova ti dà l'informazione che distingue il 5 dall'8."
+    },
+    comunicazione_famiglia: {
+      PRI: "Insegni in una classe terza di primaria. La famiglia di un bambino ti scrive chiedendo un colloquio: a casa, raccontano, il bambino piange quando deve leggere ad alta voce e dice che a scuola «non ci riesce». Dalle tue osservazioni in classe il bambino legge in modo lento e poco fluido, ma partecipa volentieri alle attività orali, interviene spesso e non ha mai manifestato disagio durante le letture in classe. Scrivi la risposta con cui fissi il colloquio con la famiglia. Massimo duecento parole."
+    },
+    adattamento_eta: {
+      ENG: "The language objective is the same for both age groups: describing a familiar place and expressing a preference about it. Design two twenty-minute teaching segments for this objective: one for Year 3 of primary school, one for Year 2 of lower secondary school. For each segment, state what the students do, what language they need, and how you would know at the end whether they have met the objective. What we are looking at is not the activities themselves but what changes between the two, and why."
+    },
+    scenario_osservativo: {
+      SEC: "Qui sotto trovi quattro osservazioni raccolte da un'insegnante nell'arco di un bimestre sullo stesso studente. Assegna a ciascuna un livello della scala br-ing, motivando la collocazione in due o tre righe. Scrivi poi un feedback formativo rivolto allo studente, riferito al percorso osservato nelle quattro tappe. Il feedback non deve contenere un voto.",
+      PRI: "Qui sotto trovi quattro osservazioni raccolte da un'insegnante nell'arco di un bimestre sullo stesso alunno. Assegna a ciascuna un livello della scala br-ing, motivando la collocazione in due o tre righe. Scrivi poi un feedback formativo rivolto all'alunno, riferito al percorso osservato nelle quattro tappe. Il feedback non deve contenere un voto.",
+      ENG: "Below you will find four observations collected by a teacher over one term, all about the same student. Assign a level from the br-ing scale to each observation, explaining your choice in two or three lines. Then write formative feedback addressed to the student about the progress you have observed across the four points. Your feedback must not contain a mark. Please write in English."
+    }
+  };
+  var ETICHETTE = {
+    lesson_plan:"Lesson plan", scenario_osservativo:"Scenario osservativo",
+    verifica_sommativa:"Verifica sommativa", comunicazione_famiglia:"Comunicazione a una famiglia",
+    adattamento_eta:"Adaptation exercise"
+  };
+  var ORDINE = {
+    SEC:["lesson_plan","scenario_osservativo","verifica_sommativa"],
+    PRI:["lesson_plan","comunicazione_famiglia","scenario_osservativo"],
+    ENG:["adattamento_eta","scenario_osservativo"]
+  };
+
+  // ---------- accesso ----------
+  el("btnEntra").addEventListener("click", async function(){
+    el("ac_msg").textContent = "";
+    EMAIL = (el("ac_email").value||"").trim();
+    if(!TOKEN) TOKEN = (el("ac_token").value||"").trim();
+    if(!EMAIL || !TOKEN){ el("ac_msg").textContent = "Inserisci email e identificativo."; return; }
+    var r = await sb.rpc("apri_stadio2", {p_token: TOKEN, p_email: EMAIL});
+    if(r.error){ el("ac_msg").textContent = "Non riusciamo a riconoscerti. Controlla l'email e il link ricevuto."; return; }
+    DATI = r.data;
+    try{ BOZZA = JSON.parse(localStorage.getItem("s2_"+TOKEN) || "{}"); }catch(e){ BOZZA = {}; }
+    el("accesso").style.display = "none";
+    el("portale").style.display = "";
+    disegna();
+  });
+
+  function salvaBozza(){
+    try{ localStorage.setItem("s2_"+TOKEN, JSON.stringify(BOZZA)); }catch(e){}
+  }
+
+  // ---------- rendering ----------
+  function disegna(){
+    el("salve").textContent = "Ciao " + (DATI.nome||"") + ",";
+
+    // livelli
+    var h = "<table><thead><tr><th>Livello</th><th>Voto</th><th>Descrittore</th></tr></thead><tbody>";
+    LIVELLI.forEach(function(l){
+      h += "<tr><td><strong>"+l[0]+"</strong></td><td>"+l[1]+"</td><td>"+esc(l[2])+"</td></tr>";
+    });
+    el("livelli").innerHTML = h + "</tbody></table>";
+
+    // riferimenti
+    var r = "";
+    if(DATI.strategia){
+      r += "<div class='riquadro'><div class='k'>Strategia metacognitiva assegnata</div>"+
+           "<strong>"+esc(DATI.strategia)+"</strong><br>"+esc(DATI.definizione_operativa||"")+"</div>";
+    }
+    if(DATI.topic){
+      r += "<div class='riquadro'><div class='k'>Topic Global Perspectives assegnato</div>"+
+           "<strong>"+esc(DATI.topic)+"</strong><br>"+esc(DATI.obiettivo_gp||"")+"</div>";
+    }
+    (DATI.obiettivi||[]).forEach(function(o){
+      r += "<div class='riquadro'><div class='k'>"+esc(o.etichetta)+"</div>"+esc(o.testo)+"</div>";
+    });
+    el("rif").innerHTML = r;
+
+    // stato: già consegnato?
+    if(DATI.submitted_at){
+      el("boxAccetta").style.display = "none";
+      el("consegne").innerHTML = "";
+      el("boxFinale").style.display = "none";
+      el("boxChiuso").style.display = "";
+      el("chiusoTxt").textContent = "Abbiamo ricevuto il tuo lavoro il " +
+        new Date(DATI.submitted_at).toLocaleString("it-IT") + ".";
+      return;
+    }
+
+    // accettazione
+    if(!DATI.accepted_at){
+      el("boxAccetta").style.display = "";
+      el("boxScad").style.display = "none";
+    } else {
+      el("boxAccetta").style.display = "none";
+      var dl = new Date(DATI.deadline_at);
+      var ore = Math.round((dl - new Date())/36e5);
+      var box = el("boxScad");
+      box.style.display = "";
+      box.className = "scad" + (ore < 24 ? " urgente" : "");
+      box.innerHTML = "<strong>Termine per la consegna:</strong> " + dl.toLocaleString("it-IT") +
+        (ore >= 0 ? " · mancano circa " + ore + " ore."
+                  : " · il termine è superato. Puoi comunque consegnare: registriamo la data.");
+    }
+
+    disegnaConsegne();
+  }
+
+  function disegnaConsegne(){
+    var v = DATI.variant, lista = ORDINE[v] || [], out = "";
+    lista.forEach(function(k, i){
+      var testo = (TESTI[k]||{})[v] || "";
+      var fatta = (DATI.gia_inviate||{})[k];
+      out += "<div class='card'><h2>Consegna "+(i+1)+" · "+ETICHETTE[k]+"</h2>";
+      out += "<p>"+esc(testo)+"</p>";
+
+      if(k === "lesson_plan"){
+        out += "<div class='campo'><label for='f_"+k+"'>Carica il file (PDF o Word)</label>"+
+               "<input type='file' id='f_"+k+"' accept='.pdf,.doc,.docx'></div>"+
+               "<button class='ghost' data-up='"+k+"'>Carica</button>"+
+               "<div class='stato-consegna' id='st_"+k+"'>"+
+               (fatta && fatta.file_path ? "<span class='fatto'>File ricevuto.</span> Puoi sostituirlo caricandone un altro."
+                                         : "Nessun file caricato.")+"</div>";
+      } else if(k === "scenario_osservativo"){
+        var sc = DATI.scenario || {};
+        out += "<div class='oss'><div class='n'>Le quattro osservazioni</div>"+
+               "<div style='white-space:pre-wrap'>"+esc(sc.testo||"")+"</div></div>";
+        for(var n=1;n<=4;n++){
+          out += "<div class='campo'><label>Osservazione "+n+" — livello e motivazione</label>"+
+                 "<select id='lv_"+n+"' data-b='sc_lv"+n+"'><option value=''>Seleziona il livello…</option>";
+          LIVELLI.forEach(function(l){
+            out += "<option value='"+l[0]+"'>"+l[0]+" ("+l[1]+")</option>";
+          });
+          out += "</select><textarea id='mt_"+n+"' data-b='sc_mt"+n+"' style='min-height:80px;margin-top:8px' "+
+                 "placeholder='Due o tre righe: perché questo livello.'></textarea></div>";
+        }
+        out += "<div class='campo'><label for='sc_fb'>Feedback formativo rivolto allo studente</label>"+
+               "<div class='aiuto'>Riferito al percorso nelle quattro tappe. Senza voto.</div>"+
+               "<textarea id='sc_fb' data-b='sc_fb'></textarea></div>"+
+               "<button class='ghost' data-save='"+k+"'>Salva questa consegna</button>"+
+               "<div class='stato-consegna' id='st_"+k+"'>"+
+               (fatta ? "<span class='fatto'>Salvata.</span>" : "Non ancora salvata.")+"</div>";
+      } else {
+        out += "<div class='campo'><textarea id='tx_"+k+"' data-b='"+k+"'></textarea></div>"+
+               "<button class='ghost' data-save='"+k+"'>Salva questa consegna</button>"+
+               "<div class='stato-consegna' id='st_"+k+"'>"+
+               (fatta ? "<span class='fatto'>Salvata.</span>" : "Non ancora salvata.")+"</div>";
+      }
+      out += "</div>";
+    });
+    el("consegne").innerHTML = out;
+    el("boxFinale").style.display = DATI.accepted_at ? "" : "none";
+
+    // ripristino bozza locale
+    Array.prototype.forEach.call(document.querySelectorAll("[data-b]"), function(c){
+      var k = c.getAttribute("data-b");
+      if(BOZZA[k] != null) c.value = BOZZA[k];
+      c.addEventListener("input", function(){ BOZZA[k] = c.value; salvaBozza(); });
+      c.addEventListener("change", function(){ BOZZA[k] = c.value; salvaBozza(); });
+    });
+    if(BOZZA.ai_dich) el("ai_dich").value = BOZZA.ai_dich;
+    el("ai_dich").addEventListener("input", function(){ BOZZA.ai_dich = el("ai_dich").value; salvaBozza(); });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-save]"), function(b){
+      b.addEventListener("click", function(){ salvaConsegna(b.getAttribute("data-save"), b); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-up]"), function(b){
+      b.addEventListener("click", function(){ caricaFile(b.getAttribute("data-up"), b); });
+    });
+  }
+
+  // ---------- salvataggio consegna testuale ----------
+  function raccogli(k){
+    if(k === "scenario_osservativo"){
+      var o = {};
+      for(var n=1;n<=4;n++){
+        o["osservazione_"+n+"_livello"] = (el("lv_"+n)||{}).value || "";
+        o["osservazione_"+n+"_motivazione"] = (el("mt_"+n)||{}).value || "";
+      }
+      o["feedback_formativo"] = (el("sc_fb")||{}).value || "";
+      return o;
+    }
+    var t = (el("tx_"+k)||{}).value || "";
+    return { testo: t };
+  }
+
+  async function salvaConsegna(k, btn){
+    var st = el("st_"+k);
+    var c = raccogli(k);
+    var vuoto = Object.keys(c).every(function(x){ return !String(c[x]).trim(); });
+    if(vuoto){ st.innerHTML = "<span style='color:var(--errore)'>Non c'è ancora nulla da salvare.</span>"; return; }
+    btn.disabled = true; st.textContent = "Salvataggio…";
+    var r = await sb.rpc("invia_consegna_stadio2", {
+      p_token: TOKEN, p_email: EMAIL, p_consegna_key: k, p_contenuto: c, p_file_path: null });
+    btn.disabled = false;
+    if(r.error){ st.innerHTML = "<span style='color:var(--errore)'>Non riuscito: "+esc(r.error.message)+"</span>"; return; }
+    st.innerHTML = "<span class='fatto'>Salvata.</span> Puoi ancora modificarla fino all'invio definitivo.";
+  }
+
+  // ---------- caricamento file ----------
+  async function caricaFile(k, btn){
+    var st = el("st_"+k), f = (el("f_"+k)||{}).files;
+    if(!f || !f.length){ st.innerHTML = "<span style='color:var(--errore)'>Scegli prima un file.</span>"; return; }
+    var file = f[0];
+    if(file.size > 10*1024*1024){ st.innerHTML = "<span style='color:var(--errore)'>Il file supera 10 MB.</span>"; return; }
+    var est = (file.name.split(".").pop()||"").toLowerCase();
+    if(["pdf","doc","docx"].indexOf(est) < 0){ st.innerHTML = "<span style='color:var(--errore)'>Formato non ammesso: usa PDF o Word.</span>"; return; }
+
+    btn.disabled = true; st.textContent = "Caricamento…";
+    var path = DATI.candidate_id + "/" + k + "." + est;
+    var up = await sb.storage.from("stadio2").upload(path, file, {upsert:true});
+    if(up.error){ btn.disabled=false; st.innerHTML = "<span style='color:var(--errore)'>Caricamento non riuscito: "+esc(up.error.message)+"</span>"; return; }
+    var r = await sb.rpc("invia_consegna_stadio2", {
+      p_token: TOKEN, p_email: EMAIL, p_consegna_key: k,
+      p_contenuto: {nota:"elaborato allegato come file"}, p_file_path: path });
+    btn.disabled = false;
+    if(r.error){ st.innerHTML = "<span style='color:var(--errore)'>"+esc(r.error.message)+"</span>"; return; }
+    st.innerHTML = "<span class='fatto'>File ricevuto.</span> Puoi sostituirlo caricandone un altro.";
+  }
+
+  // ---------- accettazione ----------
+  el("btnAccetta").addEventListener("click", async function(){
+    el("acc_msg").textContent = "";
+    var r = await sb.rpc("accetta_stadio2", {p_token: TOKEN, p_email: EMAIL});
+    if(r.error){ el("acc_msg").textContent = "Non riuscito: " + r.error.message; return; }
+    DATI.accepted_at = r.data.accepted_at; DATI.deadline_at = r.data.deadline_at;
+    disegna();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  // ---------- invio definitivo ----------
+  el("btnInvia").addEventListener("click", async function(){
+    el("inv_msg").textContent = "";
+    if(!(el("ai_dich").value||"").trim()){
+      el("inv_msg").textContent = "Completa la dichiarazione sull'uso di strumenti di AI: basta una riga."; return; }
+    if(!confirm("Invio definitivo: dopo non sarà più possibile modificare. Procedere?")) return;
+
+    var b = el("btnInvia"); b.disabled = true;
+    var r = await sb.rpc("chiudi_consegna_stadio2", {
+      p_token: TOKEN, p_email: EMAIL, p_ai_dich: (el("ai_dich").value||"").trim() });
+    b.disabled = false;
+    if(r.error){ el("inv_msg").textContent = r.error.message; return; }
+    try{ localStorage.removeItem("s2_"+TOKEN); }catch(e){}
+    DATI.submitted_at = new Date().toISOString();
+    disegna();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+})();
+</script>
+</body>
+</html>

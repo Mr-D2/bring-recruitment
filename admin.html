@@ -92,6 +92,17 @@
   .v-no{background:#FBE3E4;color:#A5323B;}
   .avviso{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:12px;font-size:13.5px;margin-top:12px;}
 
+  /* ---- contesto di valutazione Stadio 2 ---- */
+  .ctx{background:#F7F6F1;border:1px solid var(--linea);border-radius:8px;
+       padding:12px 14px;margin-bottom:12px;}
+  .ctx .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--grigio);margin-bottom:4px;}
+  .ctx p{margin:0 0 8px 0;font-size:14px;}
+  .ctx p:last-child{margin-bottom:0;}
+  .mirino{background:#FBF4DF;border-left:3px solid #C9A227;padding:10px 12px;
+          border-radius:0 6px 6px 0;margin-bottom:12px;font-size:14.5px;}
+  .mirino b{color:#7A6210;}
+
   /* ---- fit e decisione ---- */
   .fitbar{height:8px;background:var(--linea);border-radius:4px;overflow:hidden;
           width:110px;display:inline-block;vertical-align:middle;margin-right:8px;}
@@ -228,7 +239,10 @@
       <div class="pannello">
         <div class="spiega">Candidato <strong id="pseudo"></strong> · <span id="metaCons"></span><br>
         L'identità è mascherata di proposito: valuti l'elaborato, non la persona.</div>
+        <div class="ctx" id="ctxCons" style="display:none;"></div>
+        <div class="mirino" id="mirino" style="display:none;"></div>
         <div class="elab" id="elab"></div>
+        <div id="fileCons" style="margin-top:10px;display:none;"></div>
       </div>
 
       <div class="pannello" id="p_scen" style="display:none;">
@@ -807,6 +821,69 @@
     return out.join("\n\n");
   }
 
+  // Dove guardare, sotto-criterio per sotto-criterio. La rubrica dice cosa
+  // misurare; questo dice in quale parte dell'elaborato cercarlo.
+  var MIRINO = {
+    // scenario_osservativo — quattro assegnazioni + feedback finale
+    assegnazioni_livello:
+      "Solo i quattro livelli assegnati (Struggling…Commanding), confrontati con la chiave qui sotto. Ignora per ora le motivazioni e il feedback.",
+    motivazioni:
+      "Solo le 2-3 righe di motivazione sotto ciascuna osservazione. Pesa più del livello: un livello a ±1 ben argomentato vale più di un livello esatto motivato male.",
+    riconoscimento_meccanismo:
+      "Cerca in tutto il testo se il candidato nomina il meccanismo dello scenario (vedi 'Meccanismo' nella chiave). Può comparire in una motivazione o nel feedback.",
+    feedback_formativo:
+      "Solo il feedback finale rivolto allo studente. Specifico, orientato al progresso, senza voto, tono adeguato all'età. Pesa quanto le quattro assegnazioni insieme.",
+    // lesson_plan
+    coerenza_obiettivo_attivita_valutazione:
+      "Il filo fra obiettivo annuale (riquadro qui sopra), attività dei tre slot e momento valutativo. Chiediti se il legame è verificabile o solo dichiarato.",
+    didattica_attiva:
+      "La sezione 'Struttura delle lezioni'. Lo studente agisce sul materiale o assiste a una spiegazione?",
+    coerenza_inter_stadio:
+      "Confronta strategia e topic assegnati (riquadro qui sopra) con il modo in cui strutturano il percorso. Nominati o portanti?",
+    differenziazione_strutturale:
+      "Solo la sezione 'Differenziazione nello stesso slot'. Tre profili sullo stesso obiettivo, o lo stesso compito ridotto?",
+    voce_registro_momento_valutativo:
+      "Solo la sezione 'Momento valutativo': oggetto osservato, strumento, traccia che resta, natura formativa o sommativa.",
+    indicatore_sommerso:
+      "In tutto il piano: c'è un momento metacognitivo o formativo non richiesto dalla consegna? Segnale di iniziativa oltre il mansionario.",
+    // verifica_sommativa
+    misura_competenze:
+      "La consegna per lo studente. Si può rispondere ripetendo contenuti studiati, o serve applicare una competenza a materiale nuovo?",
+    allineamento_obiettivo_annuale:
+      "Confronta la prova con l'obiettivo annuale nel riquadro qui sopra, non con un'unità didattica generica.",
+    qualita_domanda_diagnostica:
+      "Solo la parte in cui il candidato dichiara cosa distingue il 5 dall'8. La parte indicata discrimina davvero, o è la più facile da correggere?",
+    discriminativita_descrittori:
+      "I due descrittori del 5 e dell'8. Sono distinguibili l'uno dall'altro e coerenti con la scala?",
+    no_media_matematica:
+      "Cerca tracce di media fra prove diverse o di compensazione aritmetica fra scritto e orale.",
+    // comunicazione_famiglia / adattamento_eta
+    distingue_scuola_da_casa: "Come il testo tratta i due contesti: separati, confusi, o messi in relazione?",
+    no_ipotesi_diagnostica: "Cerca qualunque etichetta o ipotesi clinica. Anche accennata, è un segnale grave.",
+    non_minimizza_non_allarma: "Il tono complessivo della comunicazione.",
+    passo_concreto: "La parte finale: cosa propone di fare, concretamente.",
+    tatto_alleanza_educativa: "Come è trattata la famiglia: risorsa o problema da gestire.",
+    pensiero_differenziato_per_eta: "Confronta i due segmenti: cambiano le operazioni cognitive richieste o solo il lessico?",
+    metodo_materiali_verifica_diversi: "Metodo, materiali e verifica dei due segmenti, non solo il vocabolario.",
+    adeguatezza_sviluppo_cognitivo: "Entrambi i segmenti rispetto all'età dei destinatari."
+  };
+
+  var OBIETTIVI = {}, POOL_C1 = {};
+
+  async function ctxCache(){
+    if(!Object.keys(OBIETTIVI).length){
+      var o = await sb.from("obiettivi_annuali").select("area,etichetta,testo,ordine");
+      if(!o.error){
+        (o.data||[]).sort(function(a,b){ return a.ordine - b.ordine; })
+                    .forEach(function(x){ (OBIETTIVI[x.area] = OBIETTIVI[x.area] || []).push(x); });
+      }
+    }
+    if(!Object.keys(POOL_C1).length){
+      var p = await sb.from("c1_pool").select("*");
+      if(!p.error){ (p.data||[]).forEach(function(x){ POOL_C1[x.id] = x; }); }
+    }
+  }
+
   async function mostraCand2(){
     el("p_conf").style.display = "none"; el("p_bande").style.display = "";
     el("valErr").textContent = "";
@@ -818,10 +895,87 @@
     el("metaCons").textContent = q.consegna_key + " · " + q.variant +
       (q.scenario_id ? " · scenario " + q.scenario_id : "");
 
-    var r = await sb.from("stage2_consegne").select("contenuto").eq("id", q.consegna_id).single();
-    el("elab").textContent = r.error ? ("Errore: "+r.error.message) : renderContenuto2(r.data.contenuto);
+    await ctxCache();
 
     var blocco2 = rubrica2.schema.consegne[q.consegna_key] || {};
+
+    // consegna completa: serve file_path e c1_combo, non solo il contenuto
+    var r = await sb.from("stage2_consegne")
+                    .select("contenuto, file_path, c1_combo, candidate_id")
+                    .eq("id", q.consegna_id).single();
+    if(r.error){ el("elab").textContent = "Errore: " + r.error.message; return; }
+    var cons = r.data;
+
+    // area del candidato — per l'obiettivo annuale. Nessun dato identificativo.
+    var area = null;
+    var ca = await sb.from("candidates").select("area").eq("id", cons.candidate_id).single();
+    if(!ca.error) area = ca.data.area;
+
+    // ---------- riquadro: cosa era stato chiesto e cosa era stato assegnato ----------
+    var ctx = "";
+    if(blocco2.candidate_task){
+      ctx += "<div class='k'>Compito assegnato</div><p>" + esc(blocco2.candidate_task) + "</p>";
+    }
+    if(blocco2.regola_uso){
+      ctx += "<div class='k'>Regola d'uso</div><p>" + esc(blocco2.regola_uso) + "</p>";
+    }
+    var obs = OBIETTIVI[area] || [];
+    if(obs.length){
+      ctx += "<div class='k'>Obiettivo annuale su cui il candidato doveva lavorare</div>";
+      obs.forEach(function(o){
+        ctx += "<p><strong>" + esc(o.etichetta) + "</strong><br>" + esc(o.testo) + "</p>";
+      });
+    }
+    var combo = POOL_C1[cons.c1_combo];
+    if(combo){
+      ctx += "<div class='k'>Strategia e topic assegnati in Stadio 1 · " + esc(cons.c1_combo) + "</div>" +
+             "<p><strong>" + esc(combo.strategia) + "</strong> — " + esc(combo.definizione_operativa || "") + "<br>" +
+             "Topic: " + esc(combo.topic || "") + " · " + esc(combo.obiettivo_gp || "") + "</p>";
+    }
+    var cx = el("ctxCons");
+    if(cx){ cx.innerHTML = ctx; cx.style.display = ctx ? "" : "none"; }
+
+    // ---------- mirino: quale parte della risposta guardare ----------
+    var mir = el("mirino");
+    if(mir){
+      var comp = (blocco2.scoring_components || []).filter(function(c){
+        return c.id === sub2.subcriterion_id; })[0];
+      var testo = MIRINO[sub2.subcriterion_id] || (comp && comp.desc) || "";
+      if(testo){
+        mir.innerHTML = "<b>Cosa guardare per questo sotto-criterio.</b> " + esc(testo);
+        mir.style.display = "";
+      } else { mir.style.display = "none"; }
+    }
+
+    // ---------- elaborato: testo, file, o entrambi ----------
+    var cont = cons.contenuto;
+    var soloNota = cont && typeof cont === "object" &&
+                   Object.keys(cont).length <= 2 && !!cons.file_path;
+    el("elab").textContent = soloNota
+      ? "L'elaborato è allegato come file: scaricalo con il pulsante qui sotto."
+      : renderContenuto2(cont);
+
+    var slot = el("fileCons");
+    if(slot){
+      slot.innerHTML = "";
+      if(cons.file_path){
+        var b = document.createElement("button");
+        b.className = "ghost";
+        b.textContent = "Scarica l'elaborato allegato";
+        b.addEventListener("click", async function(){
+          var s = await sb.storage.from("stadio2").createSignedUrl(cons.file_path, 600);
+          if(s.error){ alert("Non riesco ad aprire il file: " + s.error.message); return; }
+          window.open(s.data.signedUrl, "_blank");
+        });
+        var nota = document.createElement("span");
+        nota.className = "spiega";
+        nota.style.marginLeft = "10px";
+        nota.textContent = "Il nome del file può contenere il pseudonimo, non il nome del candidato.";
+        slot.appendChild(b); slot.appendChild(nota);
+        slot.style.display = "";
+      } else { slot.style.display = "none"; }
+    }
+
     var bande = (blocco2.bands || {})[sub2.subcriterion_id];
     var d = el("descr"); d.innerHTML = "";
     if(bande){

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colloquio · Stadio 3 — br-ing</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bosco:#2B4093;--salvia:#5C6BAE;--oro:#67C064;--carta:#F8F7F4;--bianco:#fff;
+        --inchiostro:#232830;--grigio:#6B7076;--linea:#E4E2DA;--errore:#DB4B54;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.55;
+       color:var(--inchiostro);background:var(--carta);}
+  header{background:var(--bosco);color:var(--carta);padding:16px 20px;
+         display:flex;justify-content:space-between;align-items:center;}
+  .wordmark{font-family:'Fraunces',serif;font-weight:600;font-size:20px;}
+  .wordmark span{color:var(--oro);}
+  main{max-width:900px;margin:0 auto;padding:26px 20px 90px;}
+  h1{font-family:'Fraunces',serif;color:var(--bosco);font-size:23px;margin-bottom:6px;}
+  input,select,textarea,button{font:inherit;}
+  input,select,textarea{padding:9px 11px;border:1px solid var(--linea);border-radius:6px;background:var(--bianco);}
+  textarea{width:100%;resize:vertical;line-height:1.5;}
+  button{padding:9px 16px;border-radius:6px;border:none;background:var(--bosco);color:var(--carta);
+         font-weight:600;cursor:pointer;}
+  button.ghost{background:none;color:var(--bosco);border:1px solid var(--linea);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .login{max-width:380px;margin:60px auto;background:var(--bianco);border:1px solid var(--linea);
+         border-radius:10px;padding:26px;display:flex;flex-direction:column;gap:12px;}
+  .msg{margin:10px 0;color:var(--errore);}
+  .schede{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .schede button{background:var(--bianco);color:var(--grigio);border:1px solid var(--linea);font-weight:500;}
+  .schede button.on{background:var(--bosco);color:var(--carta);border-color:var(--bosco);font-weight:600;}
+  .spiega{color:var(--grigio);font-size:13.5px;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;background:var(--bianco);border:1px solid var(--linea);}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--linea);text-align:left;font-size:14px;}
+  th{background:#EFEDE3;}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;}
+  .areaTit{font-family:'Fraunces',serif;color:var(--bosco);font-size:17px;margin:22px 0 6px;}
+  .avviso{background:#FBF7E8;border:1px solid #E8DCB0;border-radius:8px;padding:12px 14px;
+          font-size:13.5px;margin:10px 0;}
+  .allarme{background:#FBE3E4;border:1px solid #E9BFC1;border-radius:8px;padding:12px 14px;
+           font-size:13.5px;margin:10px 0;color:#8A2C34;}
+
+  /* ---- colloquio ---- */
+  .testa{background:var(--bianco);border:1px solid var(--linea);border-radius:10px;
+         padding:18px 20px;margin-bottom:16px;}
+  .testa .nome{font-family:'Fraunces',serif;font-size:21px;color:var(--bosco);}
+  .testa .meta{color:var(--grigio);font-size:13.5px;margin-top:3px;}
+  .blk{background:var(--bianco);border:1px solid var(--linea);border-radius:10px;
+       padding:20px;margin-bottom:14px;}
+  .blk>h2{font-family:'Fraunces',serif;color:var(--bosco);font-size:18px;margin-bottom:2px;}
+  .blk>h2 i{font-style:normal;color:var(--salvia);font-size:13px;letter-spacing:.06em;
+            text-transform:uppercase;display:block;font-family:'Inter',sans-serif;margin-bottom:4px;}
+  .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--salvia);
+     font-weight:600;margin:14px 0 6px;}
+  .leggi{background:#EEF2FA;border-left:4px solid var(--bosco);border-radius:0 8px 8px 0;
+         padding:14px 16px;font-size:15.5px;line-height:1.6;}
+  .leggi p{margin-bottom:8px;}
+  .leggi p:last-child{margin-bottom:0;}
+  .interne{background:#FBEAEA;border-left:4px solid var(--errore);border-radius:0 8px 8px 0;
+           padding:12px 14px;font-size:13.5px;margin-top:10px;display:none;}
+  .interne p{margin-bottom:7px;}
+  .sonde{list-style:none;font-size:15px;}
+  .sonde li{padding:7px 0 7px 26px;position:relative;border-bottom:1px solid var(--linea);}
+  .sonde li:before{content:"›";position:absolute;left:8px;color:var(--salvia);font-weight:700;}
+  .sonde li:last-child{border-bottom:none;}
+  .stress{background:#FBF4DF;border-left:3px solid #C9A227;padding:10px 12px;
+          border-radius:0 6px 6px 0;margin-top:8px;font-size:14px;}
+  .quattro{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 10px;}
+  .quattro button{background:var(--bianco);color:var(--inchiostro);border:2px solid var(--linea);padding:12px 4px;font-size:14px;}
+  .quattro button:hover{border-color:var(--bosco);color:var(--bosco);}
+  .quattro button.on{background:var(--bosco);color:var(--carta);border-color:var(--bosco);}
+  .descr{font-size:13px;color:#3A4048;}
+  .descr div{padding:5px 0;border-bottom:1px solid var(--linea);}
+  .descr div:last-child{border-bottom:none;}
+  .descr b{text-transform:capitalize;color:var(--salvia);}
+  .tre{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;}
+  .tre button{background:var(--bianco);color:var(--inchiostro);border:2px solid var(--linea);}
+  .tre button.on{background:var(--bosco);color:var(--carta);border-color:var(--bosco);}
+  .tre button.on-bad{background:var(--errore);color:#fff;border-color:var(--errore);}
+  .check{list-style:none;font-size:14.5px;}
+  .check li{padding:6px 0;}
+  .check label{display:flex;gap:9px;align-items:flex-start;cursor:pointer;}
+  .check input{margin-top:3px;flex:none;}
+  .fatto{color:var(--grigio);font-size:12.5px;margin-left:6px;}
+  .banda{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12.5px;font-weight:600;}
+  .bd-assente{background:#FBE3E4;color:#A5323B;} .bd-debole{background:#FBF0D6;color:#8A6D16;}
+  .bd-adeguato{background:#E2F3E1;color:#2E7D31;} .bd-forte{background:#D7EED6;color:#1E5C21;}
+  .fitbar{height:8px;background:var(--linea);border-radius:4px;overflow:hidden;
+          width:140px;display:inline-block;vertical-align:middle;margin-right:8px;}
+  .fitbar i{display:block;height:100%;background:var(--bosco);}
+  .fitbar i.capped{background:#B8901F;}
+  .num{font-variant-numeric:tabular-nums;font-weight:600;}
+  .chip{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12.5px;font-weight:600;
+        background:#EFEDE3;color:#4A4F57;margin:0 4px 4px 0;}
+  .chip.warn{background:#FBF0D6;color:#8A6D16;} .chip.bad{background:#FBE3E4;color:#A5323B;}
+  .chip.ok{background:#E2F3E1;color:#2E7D31;}
+  .riga{margin-bottom:12px;}
+  .riga label{display:block;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+              color:var(--salvia);font-weight:600;margin-bottom:5px;}
+  .azioni{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+  .esito4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0;}
+  .esito4 button{background:var(--bianco);color:var(--inchiostro);border:2px solid var(--linea);padding:12px 4px;font-size:14px;}
+  .esito4 button.on{background:#2E7D31;color:#fff;border-color:#2E7D31;}
+  .esito4 button.on-ris{background:#B8901F;color:#fff;border-color:#B8901F;}
+  .esito4 button.on-no{background:var(--errore);color:#fff;border-color:var(--errore);}
+  .ok{color:#2E7D31;font-size:13.5px;}
+  .verb{background:var(--bianco);border:1px solid var(--linea);border-radius:8px;padding:18px;
+        white-space:pre-wrap;font-size:14px;line-height:1.6;}
+
+  @media print{
+    body{background:#fff;}
+    body *{visibility:hidden;}
+    #stampa, #stampa *{visibility:visible;}
+    #stampa{position:absolute;left:0;top:0;width:100%;padding:0;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wordmark">br-ing<span>.</span> · colloquio · Stadio 3</div>
+  <button class="ghost" id="btnLogout" style="display:none;color:var(--carta);border-color:#41604F;">Esci</button>
+</header>
+<main>
+
+<div class="login" id="login">
+  <h1>Accesso team</h1>
+  <input type="email" id="lg_email" placeholder="Email" autocomplete="username">
+  <input type="password" id="lg_pass" placeholder="Password" autocomplete="current-password">
+  <button id="btnLogin">Entra</button>
+  <div class="msg" id="lg_msg"></div>
+</div>
+
+<div id="app" style="display:none;">
+
+  <div class="schede">
+    <button id="tabCoda" class="on">Colloqui</button>
+    <button id="tabGrad">Graduatoria interna</button>
+  </div>
+
+  <section id="vCoda">
+    <h1>Colloqui — Stadio 3</h1>
+    <p class="spiega">Solo i candidati che superano il cancello configurato in <code>s3_gate</code>.
+      Il fit degli stadi precedenti non compare in questa pagina finché il colloquio non è completo:
+      è la regola anti-ancoraggio, ed è applicata dal database, non da qui.
+      L'ordine è fisso — per area, poi per cognome — così la sequenza dei colloqui resta la stessa e ricostruibile.</p>
+    <div id="coda"></div>
+  </section>
+
+  <section id="vGrad" style="display:none;">
+    <h1>Graduatoria interna</h1>
+    <p class="spiega">Le fasce sono interne. Al candidato si comunica l'idoneità e la sua durata, mai la posizione:
+      a gennaio chiamerai chi copre quelle ore in quella sede, non chi ha due punti in più.</p>
+    <div id="grad"></div>
+  </section>
+
+  <section id="vCol" style="display:none;"></section>
+
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var sb = window.supabase.createClient(BRING_CONFIG.SUPABASE_URL, BRING_CONFIG.SUPABASE_ANON_KEY);
+  var AREE = {lettere:"Lettere", musica:"Musica", matsci:"Mat-Scienze", primaria:"Primaria", inglese:"Inglese"};
+  var BANDE = ["assente","debole","adeguato","forte"];
+  var VALIDO_DEFAULT = "2027-08-31";
+
+  // Testi di protocollo che non vivono nel database perché non sono
+  // oggetto di punteggio: sonde del blocco 1, spunti del blocco 3,
+  // checklist dei blocchi 4 e 5. Identici per tutti i candidati.
+  var PROTOCOLLO = {
+    b1: [
+      "Perché hai scelto questa sequenza di fasi?",
+      "Cosa fai se il gruppo di mezzo finisce prima del previsto?",
+      "Come valuti i tre profili a fine attività?"
+    ],
+    b3: [
+      "Tell me how you would open this lesson in English with a class you have never met.",
+      "One of your students understands everything but never speaks. What do you do over a term?",
+      "How would you explain to a parent that their child is progressing, without using a mark?"
+    ],
+    b4: [
+      "Organigramma: chi c'è e chi risponde a chi",
+      "Ruoli: coordinatori, referenti, aree trainanti",
+      "Come si progetta: documenti, tempi, chi decide che cosa",
+      "Come si valuta: scala formativa a sei livelli e pagella ristrutturata",
+      "Dove si inserirebbe lui o lei, concretamente"
+    ],
+    b5: [
+      "Forma contrattuale: CoCoCo ANINSEI",
+      "Calendario, compreso il luglio lavorativo",
+      "Incontri quindicinali di coordinamento",
+      "Formazione interna obbligatoria",
+      "Rientro pomeridiano",
+      "Sedi, mobilità fra Castelvenere e Caserta, percorrenze"
+    ]
+  };
+
+  var cands = {}, coda = [], S = null;
+
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function nomeDi(id){ var c = cands[id]; return c ? ((c.cognome||"")+" "+(c.nome||"")).trim() : "—"; }
+  function dataIt(d){ if(!d) return "—"; var x = new Date(d);
+    return ("0"+x.getDate()).slice(-2)+"/"+("0"+(x.getMonth()+1)).slice(-2)+"/"+x.getFullYear(); }
+
+  // ---------- accesso ----------
+  async function avvia(){ var s = await sb.auth.getSession(); mostra(!!(s.data && s.data.session)); }
+  function mostra(loggato){
+    el("login").style.display = loggato ? "none" : "";
+    el("app").style.display = loggato ? "" : "none";
+    el("btnLogout").style.display = loggato ? "" : "none";
+    if(!loggato) return;
+    var q = new URLSearchParams(window.location.search).get("c");
+    if(q){
+      history.replaceState(null, "", window.location.pathname);
+      apriColloquio(q);
+    } else caricaCoda();
+  }
+  el("btnLogin").addEventListener("click", async function(){
+    el("lg_msg").textContent = "";
+    var r = await sb.auth.signInWithPassword({email: el("lg_email").value, password: el("lg_pass").value});
+    if(r.error){ el("lg_msg").textContent = "Accesso non riuscito: " + r.error.message; return; }
+    mostra(true);
+  });
+  el("btnLogout").addEventListener("click", async function(){ await sb.auth.signOut(); mostra(false); });
+
+  el("tabCoda").addEventListener("click", function(){ scheda("coda"); });
+  el("tabGrad").addEventListener("click", function(){ scheda("grad"); });
+  function scheda(q){
+    el("tabCoda").className = q==="coda" ? "on" : "";
+    el("tabGrad").className = q==="grad" ? "on" : "";
+    el("vCoda").style.display = q==="coda" ? "" : "none";
+    el("vGrad").style.display = q==="grad" ? "" : "none";
+    el("vCol").style.display = "none";
+    if(q==="coda") caricaCoda(); else caricaGraduatoria();
+  }
+
+  // ---------- coda ----------
+  async function caricaCoda(){
+    el("coda").innerHTML = "<p class='spiega'>Carico…</p>";
+    var r = await sb.from("v_stage3_coda").select("*");
+    if(r.error){ el("coda").innerHTML = "<p class='msg'>Errore: "+esc(r.error.message)+"</p>"; return; }
+    coda = r.data || [];
+    if(!coda.length){ el("coda").innerHTML = "<div class='avviso'>Nessun candidato supera il cancello, oppure tutti i colloqui sono già stati decisi.</div>"; return; }
+    var ids = coda.map(function(x){ return x.candidate_id; });
+    var c = await sb.from("candidates").select("id,nome,cognome,email,area,sede").in("id", ids);
+    if(!c.error) c.data.forEach(function(x){ cands[x.id] = x; });
+    renderCoda();
+  }
+
+  function renderCoda(){
+    coda.sort(function(a,b){
+      if(a.area !== b.area) return a.area < b.area ? -1 : 1;
+      return nomeDi(a.candidate_id).localeCompare(nomeDi(b.candidate_id));
+    });
+    var per = {};
+    coda.forEach(function(r){ (per[r.area] = per[r.area] || []).push(r); });
+
+    var out = "";
+    Object.keys(per).forEach(function(area){
+      var righe = per[area];
+      var daFare = righe.filter(function(r){ return !r.stato_colloquio; }).length;
+      var conclusi = righe.filter(function(r){ return r.stato_colloquio === "concluso"; });
+      out += "<div class='areaTit'>"+esc(AREE[area]||area)+" · "+daFare+" da fare, "+conclusi.length+" conclusi</div>";
+      if(daFare === 0 && conclusi.length > 1){
+        var primo = conclusi.slice().sort(function(a,b){
+          return (a.data_colloquio||"") < (b.data_colloquio||"") ? -1 : 1; })[0];
+        out += "<div class='avviso'><b>Area chiusa.</b> Prima di decidere, riapri il primo colloquio — "+
+               esc(nomeDi(primo.candidate_id))+", "+dataIt(primo.data_colloquio)+
+               " — e rileggi le note. Il primo candidato viene valutato in modo sistematicamente diverso dagli altri, "+
+               "e con un valutatore unico questa è la correzione disponibile.</div>";
+      }
+      out += "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th><th>Data</th><th></th></tr></thead><tbody>";
+      righe.forEach(function(r){
+        var st = r.stato_colloquio || "da convocare";
+        out += "<tr><td><strong>"+esc(nomeDi(r.candidate_id))+"</strong><br>"+
+               "<span style='color:var(--grigio);font-size:12.5px;'>"+esc((cands[r.candidate_id]||{}).email||"")+"</span></td>"+
+               "<td>"+esc((cands[r.candidate_id]||{}).sede||"—")+"</td>"+
+               "<td><span class='chip"+(st==="concluso"?" ok":"")+"'>"+esc(st)+"</span></td>"+
+               "<td>"+dataIt(r.data_colloquio)+"</td>"+
+               "<td><button data-apri='"+r.candidate_id+"'>"+(r.stato_colloquio?"Riapri":"Apri e conduci")+"</button></td></tr>";
+      });
+      out += "</tbody></table>";
+    });
+    el("coda").innerHTML = out;
+    el("coda").querySelectorAll("[data-apri]").forEach(function(b){
+      b.addEventListener("click", function(){ apriColloquio(b.getAttribute("data-apri")); });
+    });
+  }
+
+  // ---------- graduatoria ----------
+  async function caricaGraduatoria(){
+    el("grad").innerHTML = "<p class='spiega'>Carico…</p>";
+    var r = await sb.from("v_graduatoria").select("*");
+    if(r.error){ el("grad").innerHTML = "<p class='msg'>Errore: "+esc(r.error.message)+"</p>"; return; }
+    var d = r.data || [];
+    if(!d.length){ el("grad").innerHTML = "<div class='avviso'>Nessuna decisione registrata.</div>"; return; }
+    var c = await sb.from("candidates").select("id,nome,cognome,email,area,sede")
+                    .in("id", d.map(function(x){ return x.candidate_id; }));
+    if(!c.error) c.data.forEach(function(x){ cands[x.id] = x; });
+
+    d.sort(function(a,b){
+      var ord = {idoneo_A:0, idoneo_B:1, riserva:2, non_idoneo:3};
+      if(ord[a.esito] !== ord[b.esito]) return ord[a.esito] - ord[b.esito];
+      return (b.fit||0) - (a.fit||0);
+    });
+    var out = "<table><thead><tr><th>Candidato</th><th>Area</th><th>Esito</th><th class='n'>Fit</th>"+
+              "<th>Valido fino</th><th>Comunicato</th><th></th></tr></thead><tbody>";
+    d.forEach(function(r){
+      var lab = {idoneo_A:"Idoneo · fascia A", idoneo_B:"Idoneo · fascia B",
+                 riserva:"Riserva", non_idoneo:"Non idoneo"}[r.esito];
+      var cls = r.esito.indexOf("idoneo_")===0 ? "ok" : (r.esito==="riserva" ? "warn" : "bad");
+      var extra = "";
+      if(r.esito==="riserva"){
+        extra = "<br><span class='fatto'>"+esc(r.riserva_condizione||"")+" · entro "+dataIt(r.riserva_verifica_entro)+
+                (r.riserva_scaduta ? " <b style='color:var(--errore)'>scaduta</b>" : "")+"</span>";
+      }
+      out += "<tr><td><strong>"+esc(nomeDi(r.candidate_id))+"</strong>"+
+             (r.consenso_futuro ? "" : "<br><span class='fatto'>nessun consenso per contatti futuri</span>")+"</td>"+
+             "<td>"+esc(AREE[r.area]||r.area)+"</td>"+
+             "<td><span class='chip "+cls+"'>"+lab+"</span>"+
+             (r.tetto_applicato ? " <span class='chip warn'>tetto</span>" : "")+extra+"</td>"+
+             "<td class='n'>"+(r.fit==null?"—":Number(r.fit).toFixed(1))+"</td>"+
+             "<td>"+(r.idoneita_scaduta ? "<span style='color:var(--errore)'>"+dataIt(r.valido_fino)+"</span>" : dataIt(r.valido_fino))+"</td>"+
+             "<td>"+(r.comunicato_il ? dataIt(r.comunicato_il) : "<span class='fatto'>no</span>")+"</td>"+
+             "<td><button class='ghost' data-apri='"+r.candidate_id+"'>Apri</button></td></tr>";
+    });
+    out += "</tbody></table>";
+    el("grad").innerHTML = out;
+    el("grad").querySelectorAll("[data-apri]").forEach(function(b){
+      b.addEventListener("click", function(){ apriColloquio(b.getAttribute("data-apri")); });
+    });
+  }
+
+  // ---------- apertura del colloquio ----------
+  async function apriColloquio(cid){
+    if(!cands[cid]){
+      var c = await sb.from("candidates").select("id,nome,cognome,email,area,sede").eq("id", cid).single();
+      if(!c.error) cands[cid] = c.data;
+    }
+    var r = await sb.rpc("s3_apri_colloquio", {p_candidate_id: cid, p_condotto_da: null});
+    if(r.error){ alert("Non riesco ad aprire il colloquio: "+r.error.message); return; }
+
+    var lp = await sb.from("stage2_consegne").select("consegna_key,contenuto,file_path")
+                     .eq("candidate_id", cid).eq("consegna_key","lesson_plan").maybeSingle();
+    var iv = await sb.from("stage3_interviews").select("*").eq("candidate_id", cid).maybeSingle();
+    var v = (iv && iv.data) || {};
+
+    S = { cid: cid, p: r.data, lp: (lp && lp.data) || null, iv: v,
+          b4: {}, b5: {}, stress: !!v.sonda_stress, statale: null,
+          fit: null, esito: null, verbale: null,
+          dec: v.esito ? {esito: v.esito, motivo: v.esito_motivo, valido_fino: v.valido_fino,
+                          condizione: v.riserva_condizione, entro: v.riserva_verifica_entro} : null };
+
+    el("vCoda").style.display = "none";
+    el("vGrad").style.display = "none";
+    el("vCol").style.display = "";
+    window.scrollTo(0,0);
+    renderColloquio();
+  }
+
+  function sc(id){ return (S.p.sottocriteri||[]).filter(function(x){ return x.subcriterion_id===id; })[0]; }
+
+  function widgetBanda(x){
+    if(!x) return "";
+    var d = x.descrittori || {};
+    var h = "<div class='k'>"+esc(x.label)+" · dimensione "+esc(x.dimension)+" · "+esc(x.weight_role)+"</div>";
+    h += "<div class='quattro' data-sc='"+esc(x.subcriterion_id)+"'>";
+    BANDE.forEach(function(b){
+      h += "<button data-b='"+b+"'"+(x.banda_registrata===b?" class='on'":"")+">"+b.charAt(0).toUpperCase()+b.slice(1)+"</button>";
+    });
+    h += "</div><div class='descr'>";
+    BANDE.forEach(function(b){ h += "<div><b>"+b+"</b> — "+esc(d[b]||"")+"</div>"; });
+    h += "</div>";
+    return h;
+  }
+
+  function renderColloquio(){
+    var c = cands[S.cid] || {}, p = S.p;
+    var h = "";
+
+    h += "<div class='azioni' style='margin-bottom:14px;'><button class='ghost' id='btnIndietro'>← Torna alla lista</button></div>";
+
+    h += "<div class='testa'><div class='nome'>"+esc((c.cognome||"")+" "+(c.nome||""))+"</div>"+
+         "<div class='meta'>"+esc(AREE[p.area]||p.area)+" · variante "+esc(p.variant)+" · "+esc(c.sede||"sede non indicata")+
+         " · condotto da "+esc(p.condotto_da||"—")+"</div>";
+    if(S.iv && S.iv.esito){
+      var ESL0 = {idoneo_A:"Idoneo · fascia A", idoneo_B:"Idoneo · fascia B",
+                  riserva:"Riserva", non_idoneo:"Non idoneo"};
+      h += "<div style='margin-top:10px;'><span class='chip ok'>già deciso il "+dataIt(S.iv.deciso_il)+
+           " · "+esc(ESL0[S.iv.esito])+"</span>"+
+           (S.iv.verbale_generato_il ? "<span class='chip'>verbale congelato</span>" : "")+
+           (S.iv.comunicato_il ? "<span class='chip'>comunicato</span>" : "")+"</div>";
+    }
+    h += "</div>";
+
+    // ---- blocco 1
+    var x1 = sc("s3_padronanza_progetto");
+    h += "<div class='blk'><h2><i>Blocco 1</i>Discussione della sua prova</h2>"+
+         "<p class='spiega'>Il miglior rilevatore di elaborati non autentici. Chi ha differenziato davvero risponde in dieci secondi; chi ha compilato il template va in difficoltà.</p>";
+    h += "<div class='k'>Il lesson plan consegnato</div><div class='azioni' style='margin-top:0;'>";
+    if(S.lp && S.lp.file_path) h += "<button class='ghost' id='btnLP'>Apri il file consegnato</button>";
+    else h += "<span class='fatto'>Nessun allegato in archivio per questo candidato.</span>";
+    h += "</div>";
+    h += "<div class='k'>Sonde</div><ul class='sonde'>";
+    PROTOCOLLO.b1.forEach(function(s){ h += "<li>"+esc(s)+"</li>"; });
+    h += "</ul>";
+    h += "<div class='k'>Autenticità della prova</div><div class='tre' data-aut>"+
+         "<button data-v='confermata'>Confermata</button>"+
+         "<button data-v='dubbia'>Dubbia</button>"+
+         "<button data-v='non_confermata'>Non confermata</button></div>"+
+         "<div id='autNota' class='fatto'></div>"+
+         "<div class='riga' style='margin-top:8px;'><label for='autMotivo'>Motivo (obbligatorio se non confermata)</label>"+
+         "<textarea id='autMotivo' rows='2'></textarea></div>";
+    h += widgetBanda(x1);
+    h += "<div class='riga'><label for='n1'>Note del blocco 1</label><textarea id='n1' rows='3' data-blocco='1'>"+
+         esc((p.blocchi_note||{})["1"]||"")+"</textarea></div>";
+    h += "</div>";
+
+    // ---- blocco 2
+    var sn = p.scenario || {};
+    h += "<div class='blk'><h2><i>Blocco 2</i>Scenario di gestione classe</h2>"+
+         "<p class='spiega'>Da leggere ad alta voce. Nessuna preparazione, risposta immediata: è esattamente ciò che il blocco misura. Scenario assegnato a rotazione: <b>"+
+         esc(sn.id||"—")+" · "+esc(sn.titolo||"")+"</b> <span class='fatto'>("+esc(sn.archetipo||"")+")</span></p>";
+    h += "<div class='leggi'>";
+    (sn.testo||[]).forEach(function(t){ h += "<p>"+esc(t)+"</p>"; });
+    h += "</div>";
+    h += "<div class='azioni'><button class='ghost' id='btnInterne'>Mostra le note interne</button></div>";
+    h += "<div class='interne' id='interne'>";
+    (sn.note_interne||[]).forEach(function(t){ h += "<p>"+esc(t)+"</p>"; });
+    h += "</div>";
+    h += "<div class='k'>Le quattro sonde fisse</div><ul class='sonde'>";
+    (p.sonde||[]).filter(function(s){ return s.tipo==="fissa"; }).forEach(function(s){ h += "<li>"+esc(s.testo)+"</li>"; });
+    h += "</ul>";
+    var st = (p.sonde||[]).filter(function(s){ return s.tipo==="stress"; })[0];
+    if(st){
+      h += "<div class='stress'><b>Sonda di stress</b> — solo se la risposta arriva liscia e manualistica.<br>"+
+           esc(st.testo)+
+           "<div style='margin-top:8px;'><label style='display:flex;gap:8px;align-items:center;cursor:pointer;'>"+
+           "<input type='checkbox' id='ckStress'> Ho posto la sonda di stress</label></div></div>";
+    }
+    h += widgetBanda(sc("s3_gestione_dal_vivo"));
+    h += "<div class='riga'><label for='n2'>Note del blocco 2</label><textarea id='n2' rows='3' data-blocco='2'>"+
+         esc((p.blocchi_note||{})["2"]||"")+"</textarea></div>";
+    h += "</div>";
+
+    // ---- blocco 3
+    var x3 = sc("s3_inglese_orale"), x3b = sc("s3_fasce_eta_orale");
+    if(x3){
+      h += "<div class='blk'><h2><i>Blocco 3</i>Verifica orale di inglese</h2>"+
+           "<p class='spiega'>Cinque minuti di conversazione professionale. Da qui in avanti, in inglese.</p>"+
+           "<div class='k'>Spunti</div><ul class='sonde'>";
+      PROTOCOLLO.b3.forEach(function(s){ h += "<li>"+esc(s)+"</li>"; });
+      h += "</ul>";
+      h += widgetBanda(x3);
+      if(x3b) h += widgetBanda(x3b);
+      h += "<div class='riga'><label for='n3'>Note del blocco 3</label><textarea id='n3' rows='3' data-blocco='3'>"+
+           esc((p.blocchi_note||{})["3"]||"")+"</textarea></div></div>";
+    }
+
+    // ---- blocco 4
+    h += "<div class='blk'><h2><i>Blocco 4</i>Mappa del sistema e organigramma</h2>"+
+         "<p class='spiega'>Il candidato deve capire dove si inserirebbe, non solo cosa insegnerebbe. Spunta ciò che hai effettivamente presentato: quello che dici a uno va detto a tutti.</p>"+
+         "<ul class='check' data-ck='b4'>";
+    PROTOCOLLO.b4.forEach(function(t,i){
+      h += "<li><label><input type='checkbox' data-i='"+i+"'> "+esc(t)+"</label></li>";
+    });
+    h += "</ul>";
+    h += widgetBanda(sc("s3_comprensione_sistemica"));
+    h += "<div class='riga'><label for='n4'>Note del blocco 4 — reazioni e domande</label><textarea id='n4' rows='3' data-blocco='4'>"+
+         esc((p.blocchi_note||{})["4"]||"")+"</textarea></div></div>";
+
+    // ---- blocco 5
+    h += "<div class='blk'><h2><i>Blocco 5</i>Trasparenza totale</h2>"+
+         "<p class='spiega'>Qui, e solo qui, dire tutto è percepito come generosità. L'effetto anti-turnover passa dalla percezione di onestà organizzativa: il quadro reale, per intero. Nessun punteggio — questo blocco produce un fatto.</p>"+
+         "<ul class='check' data-ck='b5'>";
+    PROTOCOLLO.b5.forEach(function(t,i){
+      h += "<li><label><input type='checkbox' data-i='"+i+"'> "+esc(t)+"</label></li>";
+    });
+    h += "</ul>";
+    h += "<div class='k'>Reazione del candidato</div><div class='tre' data-b5>"+
+         "<button data-v='accetta' disabled>Accetta il quadro</button>"+
+         "<button data-v='riserve' disabled>Ha riserve</button>"+
+         "<button data-v='si_ritira' disabled>Si ritira</button></div>"+
+         "<div id='b5Nota' class='fatto'>I tre pulsanti si attivano quando hai spuntato tutte le voci.</div>"+
+         "<div class='riga' style='margin-top:8px;'><label for='n5'>Note del blocco 5</label>"+
+         "<textarea id='n5' rows='3' data-blocco='5'>"+esc((p.blocchi_note||{})["5"]||"")+"</textarea></div></div>";
+
+    // ---- blocco 6
+    h += "<div class='blk'><h2><i>Blocco 6</i>Chiusura e decisione</h2>"+
+         "<div class='k'>Flag statale — confermato o rivisto dopo il colloquio</div>"+
+         "<div class='tre' data-statale><button data-v='basso'>Basso</button>"+
+         "<button data-v='medio'>Medio</button><button data-v='alto'>Alto</button></div>"+
+         "<p class='spiega'>Non incide sul fit: orienta la decisione di investimento.</p>"+
+         "<div class='azioni'><button id='btnSblocca'>Sblocca il fit degli stadi 1 e 2</button>"+
+         "<span class='fatto' id='sbMsg'>Si sblocca solo quando tutte le bande e l'autenticità sono registrate.</span></div>"+
+         "<div id='fitPanel' style='display:none;margin-top:16px;'></div></div>";
+
+    h += "<div id='decPanel'></div><div id='verbPanel'></div><div id='mailPanel'></div>";
+
+    el("vCol").innerHTML = h;
+    aggancia();
+  }
+
+  // ---------- eventi del colloquio ----------
+  function aggancia(){
+    var root = el("vCol");
+
+    el("btnIndietro").addEventListener("click", function(){ S = null; scheda("coda"); });
+
+    var lp = el("btnLP");
+    if(lp) lp.addEventListener("click", async function(){
+      var s = await sb.storage.from("stadio2").createSignedUrl(S.lp.file_path, 600);
+      if(s.error){ alert("Non riesco ad aprire il file: "+s.error.message); return; }
+      window.open(s.data.signedUrl, "_blank");
+    });
+
+    var bi = el("btnInterne");
+    if(bi) bi.addEventListener("click", function(){
+      var d = el("interne"), ap = d.style.display === "block";
+      d.style.display = ap ? "none" : "block";
+      bi.textContent = ap ? "Mostra le note interne" : "Nascondi le note interne";
+    });
+
+    // bande
+    root.querySelectorAll(".quattro").forEach(function(g){
+      g.querySelectorAll("button").forEach(function(b){
+        b.addEventListener("click", async function(){
+          var scId = g.getAttribute("data-sc"), banda = b.getAttribute("data-b");
+          b.disabled = true;
+          var r = await sb.rpc("s3_registra_banda",
+            {p_candidate_id: S.cid, p_subcriterion_id: scId, p_band: banda, p_nota: null});
+          b.disabled = false;
+          if(r.error){ alert("Non registrata: "+r.error.message); return; }
+          g.querySelectorAll("button").forEach(function(o){ o.className = ""; });
+          b.className = "on";
+          var x = sc(scId); if(x) x.banda_registrata = banda;
+        });
+      });
+    });
+
+    // autenticità
+    var gaut = root.querySelector("[data-aut]");
+    gaut.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click", async function(){
+        var v = b.getAttribute("data-v");
+        var motivo = el("autMotivo").value.trim();
+        if(v === "non_confermata"){
+          if(!motivo){ alert("Per 'non confermata' serve il motivo: accende un tetto a 50 sul fit, senza revoca."); return; }
+          if(!confirm("Confermi? Il fit di questo candidato verrà limitato a 50 e il tetto non è revocabile.")) return;
+        }
+        var r = await sb.rpc("s3_registra_autenticita",
+          {p_candidate_id: S.cid, p_esito: v, p_motivo: motivo || null});
+        if(r.error){ alert("Non registrata: "+r.error.message); return; }
+        gaut.querySelectorAll("button").forEach(function(o){ o.className = ""; });
+        b.className = (v === "non_confermata") ? "on-bad" : "on";
+        S.p.autenticita = v;
+        el("autNota").innerHTML = (v === "non_confermata")
+          ? "<span style='color:var(--errore)'>Tetto a 50 attivo. La fascia A non sarà assegnabile.</span>"
+          : "Registrata.";
+      });
+    });
+    if(S.p.autenticita){
+      var pre = gaut.querySelector("[data-v='"+S.p.autenticita+"']");
+      if(pre) pre.className = (S.p.autenticita === "non_confermata") ? "on-bad" : "on";
+    }
+
+    // sonda di stress
+    var ck = el("ckStress");
+    if(ck) ck.checked = !!S.stress;
+    if(ck) ck.addEventListener("change", async function(){
+      S.stress = ck.checked;
+      await sb.rpc("s3_registra_meta", {p_candidate_id: S.cid, p_sonda_stress: ck.checked, p_flag_statale: null});
+    });
+
+    // flag statale
+    var gst = root.querySelector("[data-statale]");
+    gst.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click", async function(){
+        var v = b.getAttribute("data-v");
+        var r = await sb.rpc("s3_registra_meta",
+          {p_candidate_id: S.cid, p_sonda_stress: null, p_flag_statale: v});
+        if(r.error){ alert("Non registrato: "+r.error.message); return; }
+        gst.querySelectorAll("button").forEach(function(o){ o.className = ""; });
+        b.className = "on"; S.statale = v;
+      });
+    });
+
+    // checklist
+    root.querySelectorAll("[data-ck]").forEach(function(ul){
+      var quale = ul.getAttribute("data-ck");
+      ul.querySelectorAll("input").forEach(function(inp){
+        inp.addEventListener("change", function(){
+          S[quale][inp.getAttribute("data-i")] = inp.checked;
+          if(quale === "b5") verificaB5();
+        });
+      });
+    });
+
+    // blocco 5
+    var g5 = root.querySelector("[data-b5]");
+    g5.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click", async function(){
+        var v = b.getAttribute("data-v");
+        if(v === "si_ritira" && !confirm("Registro il ritiro del candidato. Accende un segnale KO, che come sempre non esclude da solo. Procedo?")) return;
+        var r = await sb.rpc("s3_registra_blocco5",
+          {p_candidate_id: S.cid, p_esito: v, p_note: el("n5").value || null});
+        if(r.error){ alert("Non registrato: "+r.error.message); return; }
+        g5.querySelectorAll("button").forEach(function(o){ o.className = ""; });
+        b.className = (v === "si_ritira") ? "on-bad" : "on";
+        S.p.blocco5 = {esito: v};
+      });
+    });
+    if(S.p.blocco5 && S.p.blocco5.esito){
+      ["0","1","2","3","4","5"].forEach(function(i){ S.b5[i] = true; });
+      root.querySelectorAll("[data-ck='b5'] input").forEach(function(i){ i.checked = true; });
+      verificaB5();
+      var pre5 = g5.querySelector("[data-v='"+S.p.blocco5.esito+"']");
+      if(pre5) pre5.className = (S.p.blocco5.esito === "si_ritira") ? "on-bad" : "on";
+    }
+
+    // note dei blocchi, salvate quando esci dal campo
+    root.querySelectorAll("[data-blocco]").forEach(function(ta){
+      ta.addEventListener("blur", async function(){
+        var n = parseInt(ta.getAttribute("data-blocco"), 10);
+        if(!ta.value.trim()) return;
+        var r = await sb.rpc("s3_registra_blocco", {p_candidate_id: S.cid, p_blocco: n, p_nota: ta.value});
+        if(r.error) console.warn("nota blocco " + n, r.error.message);
+      });
+    });
+
+    el("btnSblocca").addEventListener("click", sbloccaFit);
+  }
+
+  function verificaB5(){
+    var tutte = PROTOCOLLO.b5.every(function(_, i){ return S.b5[i]; });
+    var g5 = el("vCol").querySelector("[data-b5]");
+    g5.querySelectorAll("button").forEach(function(b){ b.disabled = !tutte; });
+    el("b5Nota").textContent = tutte
+      ? "Quadro presentato per intero."
+      : "I tre pulsanti si attivano quando hai spuntato tutte le voci.";
+  }
+
+  // ---------- sblocco del fit ----------
+  async function sbloccaFit(){
+    var r = await sb.rpc("s3_fit_sbloccato", {p_candidate_id: S.cid});
+    if(r.error){ alert("Errore: "+r.error.message); return; }
+    if(!r.data.sbloccato){
+      el("sbMsg").innerHTML = "<span style='color:var(--errore)'>Mancano ancora: "+
+        esc((r.data.mancanti||[]).join(", "))+"</span>";
+      return;
+    }
+    S.fit = r.data;
+    el("sbMsg").textContent = "";
+    renderFit();
+    renderDecisione();
+  }
+
+  function renderFit(){
+    var f = S.fit.fit || {}, ev = S.fit.evidenza_per_stadio || [];
+    var pct = Math.max(0, Math.min(100, Number(f.fit || 0)));
+    var h = "<div class='k'>Fit dopo il colloquio</div>"+
+            "<div><span class='fitbar'><i class='"+(f.tetto_applicato?"capped":"")+"' style='width:"+pct+"%'></i></span>"+
+            "<span class='num' style='font-size:19px;'>"+(f.fit==null?"—":Number(f.fit).toFixed(1))+"</span> ";
+    if(f.tetto_applicato) h += "<span class='chip warn'>tetto "+f.tetto_valore+" · "+esc((f.tetto_attivo_da||[]).join(" · "))+"</span>";
+    if(f.fit_senza_tetto != null && f.tetto_applicato)
+      h += "<span class='chip'>senza tetto "+Number(f.fit_senza_tetto).toFixed(1)+"</span>";
+    h += "<span class='chip"+(Number(f.copertura_pesi||0) >= 100 ? " ok" : "")+"'>copertura "+
+         (f.copertura_pesi==null?"—":Number(f.copertura_pesi).toFixed(0)+"%")+"</span>";
+    if(f.ko_segnale) h += "<span class='chip bad'>segnale KO</span>";
+    if(f.flag_statale) h += "<span class='chip'>statale "+esc(f.flag_statale)+"</span>";
+    h += "</div>";
+    if(f.ko_segnale && !f.ko_confermato)
+      h += "<div class='allarme'>Segnale KO non confermato: "+esc(f.ko_segnale_motivo||"")+
+           ". Il segnale non esclude da solo — la conferma è un atto separato, dal backoffice.</div>";
+
+    // evidenza per stadio
+    var dim = {};
+    ev.forEach(function(e){
+      dim[e.dimension] = dim[e.dimension] || {stadio1:[], stadio2:[], stadio3:[]};
+      dim[e.dimension][e.stadio].push(e);
+    });
+    h += "<div class='k'>Da dove viene, dimensione per dimensione</div>"+
+         "<table><thead><tr><th>Dim.</th><th>Stadio 1</th><th>Stadio 2</th><th>Stadio 3</th></tr></thead><tbody>";
+    Object.keys(dim).sort().forEach(function(d){
+      h += "<tr><td><b>"+esc(d)+"</b></td>";
+      ["stadio1","stadio2","stadio3"].forEach(function(s){
+        var v = dim[d][s];
+        h += "<td>"+(v.length ? v.map(function(e){
+          return "<span class='banda bd-"+e.band+"' title='"+esc(e.subcriterion_id)+"'>"+e.band+"</span>";
+        }).join(" ") : "<span class='fatto'>—</span>")+"</td>";
+      });
+      h += "</tr>";
+    });
+    h += "</tbody></table>";
+    h += "<p class='spiega' style='margin-top:10px;'>Il motore di calcolo accorpa Stadio 2 e 3 in un'unica chiave: qui sono separati in lettura.</p>";
+
+    el("fitPanel").innerHTML = h;
+    el("fitPanel").style.display = "";
+  }
+
+  // ---------- decisione ----------
+  function renderDecisione(){
+    var h = "<div class='blk'><h2>Decisione</h2>"+
+      "<p class='spiega'>Il fit informa, non decide. L'esito è un atto tuo, con motivazione e data: è il punto 4 dell'informativa consegnata al candidato.</p>"+
+      "<div class='esito4' data-esito>"+
+      "<button data-v='idoneo_A'>Idoneo · fascia A</button>"+
+      "<button data-v='idoneo_B'>Idoneo · fascia B</button>"+
+      "<button data-v='riserva'>Riserva</button>"+
+      "<button data-v='non_idoneo'>Non idoneo</button></div>"+
+      "<p class='spiega'>Fascia A: lo prenderesti anche senza un buco da coprire. Fascia B: idoneo, lo chiami quando il bisogno c'è. "+
+      "Un tetto attivo esclude la fascia A per costruzione — il database la rifiuta.</p>"+
+      "<div class='riga'><label for='dMotivo'>Motivazione (obbligatoria)</label><textarea id='dMotivo' rows='3'></textarea></div>"+
+      "<div id='risBox' style='display:none;'>"+
+      "<div class='riga'><label for='dCond'>Condizione da verificare</label>"+
+      "<input type='text' id='dCond' style='width:100%;' placeholder='es. certificazione B2 conseguita'></div>"+
+      "<div class='riga'><label for='dEntro'>Da verificare entro</label><input type='date' id='dEntro'></div>"+
+      "<p class='spiega'>Senza condizione e senza data la riserva non si salva: altrimenti diventa il cassetto dove finiscono i dubbi.</p></div>"+
+      "<div class='riga'><label for='dValido'>Idoneità valida fino al</label>"+
+      "<input type='date' id='dValido' value='"+VALIDO_DEFAULT+"'></div>"+
+      "<div class='azioni'><button id='btnDecidi' disabled>Registra la decisione</button>"+
+      "<span class='fatto' id='decMsg'></span></div></div>";
+    el("decPanel").innerHTML = h;
+
+    var g = el("decPanel").querySelector("[data-esito]");
+    g.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click", function(){
+        var v = b.getAttribute("data-v");
+        g.querySelectorAll("button").forEach(function(o){ o.className = ""; });
+        b.className = v === "riserva" ? "on-ris" : (v === "non_idoneo" ? "on-no" : "on");
+        S.esito = v;
+        el("risBox").style.display = (v === "riserva") ? "" : "none";
+        el("btnDecidi").disabled = false;
+      });
+    });
+
+    el("btnDecidi").addEventListener("click", async function(){
+      var motivo = el("dMotivo").value.trim();
+      if(!motivo){ alert("La motivazione è obbligatoria."); return; }
+      var args = {p_candidate_id: S.cid, p_esito: S.esito, p_motivo: motivo,
+                  p_condizione: null, p_verifica_entro: null,
+                  p_valido_fino: el("dValido").value || null};
+      if(S.esito === "riserva"){
+        args.p_condizione = el("dCond").value.trim();
+        args.p_verifica_entro = el("dEntro").value || null;
+        if(!args.p_condizione || !args.p_verifica_entro){
+          alert("La riserva richiede una condizione verificabile e una data."); return;
+        }
+      }
+      var r = await sb.rpc("s3_decidi", args);
+      if(r.error){ alert("Non registrata: "+r.error.message); return; }
+      S.dec = {esito: S.esito, motivo: motivo, valido_fino: r.data.valido_fino,
+               condizione: args.p_condizione, entro: args.p_verifica_entro};
+      el("decMsg").innerHTML = "<span class='ok'>Decisione registrata.</span>";
+      el("decPanel").querySelectorAll("button").forEach(function(b){ b.disabled = true; });
+      renderVerbale();
+      renderMail();
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+  }
+
+  // ---------- verbale ----------
+  function costruisciVerbale(){
+    var c = cands[S.cid] || {}, p = S.p, f = (S.fit && S.fit.fit) || {};
+    var L = [];
+    var ESL = {idoneo_A:"IDONEO — fascia A", idoneo_B:"IDONEO — fascia B",
+               riserva:"RISERVA", non_idoneo:"NON IDONEO"};
+    L.push("VERBALE DI COLLOQUIO — STADIO 3");
+    L.push("Selezione docenti esterni · anno scolastico 2026/27 · br-ing");
+    L.push("");
+    L.push("Candidato: " + ((c.cognome||"")+" "+(c.nome||"")).trim());
+    L.push("Pseudonimo di sistema: " + (f.pseudonym || "—"));
+    L.push("Area: " + (AREE[p.area]||p.area) + " · variante " + p.variant + " · sede indicata: " + (c.sede||"—"));
+    L.push("Data del colloquio: " + dataIt(new Date()));
+    L.push("Condotto da: " + (p.condotto_da || "—"));
+    L.push("Protocollo: colloquio strutturato a sei blocchi, domande identiche per tutti i candidati dell'area.");
+    L.push("");
+    L.push("BLOCCO 1 — DISCUSSIONE DELLA PROVA");
+    L.push("Sonde poste: " + PROTOCOLLO.b1.join(" / "));
+    L.push("Autenticità dell'elaborato: " + (p.autenticita || "non registrata"));
+    if(el("autMotivo") && el("autMotivo").value.trim()) L.push("Motivo: " + el("autMotivo").value.trim());
+    L.push("Banda assegnata (padronanza del progetto): " + bandaDi("s3_padronanza_progetto"));
+    L.push("Note: " + (val("n1") || "—"));
+    L.push("");
+    L.push("BLOCCO 2 — SCENARIO DI GESTIONE CLASSE");
+    L.push("Scenario assegnato: " + (p.scenario ? p.scenario.id + " · " + p.scenario.titolo : "—"));
+    L.push("Sonde fisse poste, nell'ordine: " +
+      (p.sonde||[]).filter(function(s){return s.tipo==="fissa";}).map(function(s){return s.testo;}).join(" / "));
+    L.push("Sonda di stress: " + (S.stress ? "posta" : "non posta"));
+    L.push("Banda assegnata (gestione dal vivo): " + bandaDi("s3_gestione_dal_vivo"));
+    L.push("Note: " + (val("n2") || "—"));
+    if(sc("s3_inglese_orale")){
+      L.push("");
+      L.push("BLOCCO 3 — VERIFICA ORALE DI INGLESE");
+      L.push("Banda assegnata (conversazione professionale): " + bandaDi("s3_inglese_orale"));
+      if(sc("s3_fasce_eta_orale")) L.push("Banda assegnata (modulazione per fasce d'età): " + bandaDi("s3_fasce_eta_orale"));
+      L.push("Note: " + (val("n3") || "—"));
+    }
+    L.push("");
+    L.push("BLOCCO 4 — MAPPA DEL SISTEMA E ORGANIGRAMMA");
+    L.push("Presentato al candidato:");
+    PROTOCOLLO.b4.forEach(function(t,i){ L.push("  " + (S.b4[i] ? "[x] " : "[ ] ") + t); });
+    L.push("Banda assegnata (comprensione sistemica): " + bandaDi("s3_comprensione_sistemica"));
+    L.push("Note: " + (val("n4") || "—"));
+    L.push("");
+    L.push("BLOCCO 5 — TRASPARENZA TOTALE");
+    L.push("Condizioni presentate al candidato:");
+    PROTOCOLLO.b5.forEach(function(t,i){ L.push("  " + (S.b5[i] ? "[x] " : "[ ] ") + t); });
+    L.push("Reazione del candidato: " + ((S.p.blocco5 && S.p.blocco5.esito) || "non registrata"));
+    L.push("Note: " + (val("n5") || "—"));
+    L.push("");
+    L.push("BLOCCO 6 — CHIUSURA");
+    L.push("Flag statale dopo il colloquio: " + (S.statale || "non rivisto"));
+    L.push("Fit al termine del colloquio: " + (f.fit==null ? "—" : Number(f.fit).toFixed(1)) +
+           (f.tetto_applicato ? "  (tetto " + f.tetto_valore + " attivo per: " + ((f.tetto_attivo_da||[]).join(", ")) + ")" : ""));
+    if(f.fit_senza_tetto != null && f.tetto_applicato)
+      L.push("Fit senza tetto: " + Number(f.fit_senza_tetto).toFixed(1));
+    L.push("Copertura dei pesi: " + (f.copertura_pesi==null ? "—" : Number(f.copertura_pesi).toFixed(0) + "%"));
+    if(f.ko_segnale) L.push("Segnale KO presente: " + (f.ko_segnale_motivo||"") +
+      " — non confermato, nessuna esclusione automatica.");
+    L.push("Il fit è stato reso visibile solo dopo la registrazione di tutte le bande (vincolo anti-ancoraggio).");
+    L.push("");
+    if(S.dec){
+      L.push("ESITO: " + ESL[S.dec.esito]);
+      L.push("Motivazione: " + S.dec.motivo);
+      if(S.dec.esito === "riserva"){
+        L.push("Condizione sospensiva: " + S.dec.condizione);
+        L.push("Da verificare entro: " + dataIt(S.dec.entro));
+      }
+      if(S.dec.esito !== "non_idoneo") L.push("Idoneità valida fino al: " + dataIt(S.dec.valido_fino));
+      L.push("");
+      L.push("La decisione è stata assunta dal sottoscritto sulla base del colloquio e degli elementi raccolti");
+      L.push("negli stadi precedenti. Nessuna esclusione o inserimento discende da un calcolo automatico.");
+    } else {
+      L.push("ESITO: non ancora registrato.");
+    }
+    L.push("");
+    L.push("Firma del valutatore  ______________________________");
+    return L.join("\n");
+  }
+  function val(id){ var e = el(id); return e ? e.value.trim() : ""; }
+  function bandaDi(id){ var x = sc(id); return (x && x.banda_registrata) ? x.banda_registrata : "non assegnata"; }
+
+  function renderVerbale(){
+    el("verbPanel").innerHTML =
+      "<div class='blk'><h2>Verbale</h2>"+
+      "<p class='spiega'>Generato dai campi che hai compilato, senza rielaborazione: un verbale che riscrive è un verbale che introduce cose che non hai detto. Puoi correggerlo prima di congelarlo; dopo, resta quello.</p>"+
+      "<textarea id='verbTxt' rows='22'></textarea>"+
+      "<div class='azioni'><button id='btnCongela'>Congela e salva</button>"+
+      "<button class='ghost' id='btnStampa'>Stampa o salva in PDF</button>"+
+      "<button class='ghost' id='btnDoc'>Scarica per Word</button>"+
+      "<span class='fatto' id='verbMsg'></span></div></div>"+
+      "<div id='stampa' style='display:none;'></div>";
+    el("verbTxt").value = costruisciVerbale();
+
+    el("btnCongela").addEventListener("click", async function(){
+      var t = el("verbTxt").value;
+      var r = await sb.rpc("s3_salva_verbale", {p_candidate_id: S.cid, p_testo: t, p_sostituisci: false});
+      if(r.error){ alert("Non salvato: "+r.error.message); return; }
+      if(r.data && r.data.ok === false){
+        if(!confirm("Esiste già un verbale congelato del "+dataIt(r.data.generato_il)+
+                    ". Sostituendolo, il precedente resta archiviato con data e autore. Procedo?")) return;
+        var r2 = await sb.rpc("s3_salva_verbale", {p_candidate_id: S.cid, p_testo: t, p_sostituisci: true});
+        if(r2.error){ alert("Non salvato: "+r2.error.message); return; }
+      }
+      el("verbMsg").innerHTML = "<span class='ok'>Congelato.</span>";
+      el("verbTxt").setAttribute("readonly", "readonly");
+      el("btnCongela").disabled = true;
+    });
+
+    el("btnStampa").addEventListener("click", function(){
+      var d = el("stampa");
+      d.style.display = "";
+      d.className = "verb";
+      d.textContent = el("verbTxt").value;
+      window.print();
+      setTimeout(function(){ d.style.display = "none"; }, 500);
+    });
+
+    el("btnDoc").addEventListener("click", function(){
+      var c = cands[S.cid] || {};
+      var html = "<html xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'>"+
+        "<style>body{font-family:Calibri,sans-serif;font-size:11pt;line-height:1.45;} pre{font-family:Calibri,sans-serif;white-space:pre-wrap;}</style>"+
+        "</head><body><pre>"+esc(el("verbTxt").value)+"</pre></body></html>";
+      var blob = new Blob(["\ufeff", html], {type: "application/msword"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Verbale_Colloquio_" + ((c.cognome||"candidato")+"_"+(c.nome||"")).replace(/\s+/g,"") + ".doc";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
+  // ---------- comunicazione al candidato ----------
+  function testoMail(){
+    var c = cands[S.cid] || {}, d = S.dec || {};
+    var nome = (c.nome || "").trim();
+    var apri = "Gentile " + (nome || "candidata, gentile candidato") + ",\n\n";
+    var chiudi = "\n\nPer qualsiasi chiarimento restiamo a disposizione.\nI Suoi dati sono trattati secondo l'informativa che Le è stata consegnata al momento della candidatura.\n\nUn cordiale saluto,\nDaniele Della Rosa\nDirezione · br-ing";
+
+    if(d.esito === "idoneo_A" || d.esito === "idoneo_B"){
+      return {
+        ogg: "Selezione docenti br-ing 2026/27 — esito del colloquio",
+        txt: apri +
+          "La ringrazio per il tempo e per la disponibilità con cui ha affrontato tutte le fasi della selezione.\n\n" +
+          "Al termine del colloquio Le comunico che il Suo profilo è stato giudicato idoneo per l'inserimento nell'organico di br-ing per l'anno scolastico 2026/27.\n\n" +
+          "Le chiedo di leggere con attenzione il punto che segue, perché è il più importante. L'idoneità non corrisponde a una proposta contrattuale immediata: la selezione riguarda i ruoli che si renderanno necessari nel corso dell'anno scolastico, e la chiamata avviene nel momento in cui si apre una necessità compatibile con il Suo profilo, con la Sua area e con la sede. Può essere a settembre, può essere più avanti nell'anno, e può non arrivare affatto se quella necessità non si presenta.\n\n" +
+          "La Sua idoneità resta valida fino al " + dataIt(d.valido_fino) + ". Entro quel termine non dovrà ripetere alcuna fase della selezione: se si apre una posizione, La contatteremo direttamente.\n\n" +
+          "Se nel frattempo la Sua disponibilità cambia — altre sedi, altri orari, un impegno che ha accettato altrove — Le chiedo di scrivermi: mi permette di non farLe perdere tempo e di non perderne io." + chiudi
+      };
+    }
+    if(d.esito === "riserva"){
+      return {
+        ogg: "Selezione docenti br-ing 2026/27 — esito del colloquio",
+        txt: apri +
+          "La ringrazio per il tempo e per la disponibilità con cui ha affrontato tutte le fasi della selezione.\n\n" +
+          "Al termine del colloquio la Sua candidatura resta in valutazione sospesa, in attesa di un elemento che abbiamo concordato durante l'incontro: " + (d.condizione || "") + ".\n\n" +
+          "Ci risentiamo entro il " + dataIt(d.entro) + ". Se in quella data l'elemento sarà disponibile, la Sua candidatura riprende il suo corso senza che Lei debba ripetere alcuna fase.\n\n" +
+          "Se invece nel frattempo la situazione cambia, in un senso o nell'altro, Le chiedo semplicemente di scrivermi." + chiudi
+      };
+    }
+    return {
+      ogg: "Selezione docenti br-ing 2026/27 — esito del colloquio",
+      txt: apri +
+        "La ringrazio per il tempo e per l'impegno con cui ha affrontato tutte le fasi della selezione, che era articolata e richiedeva un lavoro reale.\n\n" +
+        "Al termine del colloquio Le comunico che per questa selezione non procederemo con il Suo inserimento. La decisione riguarda la corrispondenza fra il profilo richiesto e il quadro complessivo emerso nelle prove, e non è un giudizio sulla Sua professionalità.\n\n" +
+        "Se desidera un riscontro più circostanziato su come è andata, sono disponibile a dedicarLe una telefonata: lo dico sul serio, non per formula." + chiudi
+    };
+  }
+
+  function renderMail(){
+    var m = testoMail();
+    el("mailPanel").innerHTML =
+      "<div class='blk'><h2>Comunicazione al candidato</h2>"+
+      "<p class='spiega'>Il testo dice l'idoneità e fino a quando vale. Non dice la posizione in graduatoria: comunicare un ordine crea un'aspettativa che a gennaio non rispetterai, perché chiamerai chi copre quelle ore in quella sede.</p>"+
+      "<div class='riga'><label for='mOgg'>Oggetto</label><input type='text' id='mOgg' style='width:100%;'></div>"+
+      "<div class='riga'><label for='mTxt'>Testo</label><textarea id='mTxt' rows='16'></textarea></div>"+
+      "<div class='azioni'><button id='btnCopia'>Copia oggetto e testo</button>"+
+      "<button class='ghost' id='btnMailto'>Apri nel client di posta</button>"+
+      "<button class='ghost' id='btnComunicato'>Segna come comunicato</button>"+
+      "<span class='fatto' id='mMsg'></span></div></div>";
+    el("mOgg").value = m.ogg;
+    el("mTxt").value = m.txt;
+
+    el("btnCopia").addEventListener("click", function(){
+      navigator.clipboard.writeText(el("mOgg").value + "\n\n" + el("mTxt").value)
+        .then(function(){ el("mMsg").innerHTML = "<span class='ok'>Copiato.</span>"; });
+    });
+    el("btnMailto").addEventListener("click", function(){
+      var c = cands[S.cid] || {};
+      window.location.href = "mailto:" + encodeURIComponent(c.email||"") +
+        "?subject=" + encodeURIComponent(el("mOgg").value) +
+        "&body=" + encodeURIComponent(el("mTxt").value);
+    });
+    el("btnComunicato").addEventListener("click", async function(){
+      var r = await sb.rpc("s3_segna_comunicazione", {p_candidate_id: S.cid, p_testo: el("mTxt").value});
+      if(r.error){ alert("Non registrato: "+r.error.message); return; }
+      el("mMsg").innerHTML = "<span class='ok'>Registrato come comunicato.</span>";
+    });
+  }
+
+  avvia();
+})();
+</script>
+</body>
+</html>

@@ -156,6 +156,7 @@
     <button id="scKo">Segnali KO</button>
     <button id="scDiv">Divergenze</button>
     <button id="scInv">Inviti · Stadio 2</button>
+    <button id="scS3">Stadio 3 · colloqui</button>
   </div>
 
   <section id="vS1">
@@ -459,6 +460,55 @@
     </div>
   </section>
 
+  <section id="vS3" style="display:none;">
+
+    <div class="pannello">
+      <h2>Colloqui da condurre</h2>
+      <div class="spiega">Chi supera il cancello configurato in <code>s3_gate</code> e non ha ancora una decisione.
+      Il fit non compare in questa tabella: la conduzione del colloquio si apre in una pagina separata, e il numero
+      degli stadi precedenti resta invisibile finché tutte le bande non sono registrate.</div>
+      <div id="s3Scadenze"></div>
+      <div id="s3Coda"></div>
+    </div>
+
+    <div class="pannello">
+      <h2>Graduatoria interna</h2>
+      <div class="spiega">Le fasce sono interne. Al candidato si comunica l'idoneità e la sua durata, mai la posizione:
+      a gennaio chiami chi copre quelle ore in quella sede, non chi ha due punti in più.</div>
+      <div class="filtri">
+        <select id="f3_area">
+          <option value="">Tutte le aree</option>
+          <option value="lettere">Lettere</option>
+          <option value="musica">Musica</option>
+          <option value="matsci">Matematica e Scienze</option>
+          <option value="primaria">Primaria</option>
+          <option value="inglese">Inglese</option>
+        </select>
+        <select id="f3_esito">
+          <option value="">Tutti gli esiti</option>
+          <option value="idoneo_A">Solo fascia A</option>
+          <option value="idoneo_B">Solo fascia B</option>
+          <option value="riserva">Solo riserve</option>
+          <option value="non_idoneo">Solo non idonei</option>
+        </select>
+        <button class="ghost" id="btnS3Agg">Aggiorna</button>
+        <button class="ghost" id="btnS3Csv">Esporta CSV</button>
+        <span class="spiega" id="s3Msg" style="margin-left:6px;"></span>
+      </div>
+      <div id="s3Grad"></div>
+    </div>
+
+    <div class="pannello" id="p_s3Verb" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+        <h2 id="s3vNome" style="flex:1;margin:0;"></h2>
+        <button class="ghost" id="btnS3vChiudi">Chiudi</button>
+      </div>
+      <div class="spiega" id="s3vMeta"></div>
+      <pre id="s3vTesto" class="elab" style="max-height:none;"></pre>
+    </div>
+
+  </section>
+
 </div>
 
 </main>
@@ -723,6 +773,7 @@
     el("vDiv").style.display = nome==="div" ? "" : "none";
     el("vInv").style.display = nome==="inv" ? "" : "none";
     el("vFit").style.display = nome==="fit" ? "" : "none";
+    el("vS3").style.display  = nome==="s3"  ? "" : "none";
     el("sc1").className   = nome==="s1"  ? "on" : "";
     el("scS0").className  = nome==="s0"  ? "on" : "";
     el("sc2").className   = nome==="s2"  ? "on" : "";
@@ -730,12 +781,14 @@
     el("scDiv").className = nome==="div" ? "on" : "";
     el("scInv").className = nome==="inv" ? "on" : "";
     el("scFit").className = nome==="fit" ? "on" : "";
+    el("scS3").className  = nome==="s3"  ? "on" : "";
     if(nome==="s0"){ caricaLista0(); }
     if(nome==="s2"){ avviaS2(); }
     if(nome==="ko"){ caricaKo(); }
     if(nome==="div"){ caricaDiv(); }
     if(nome==="inv"){ caricaInviti(); }
     if(nome==="fit"){ caricaFit(); }
+    if(nome==="s3"){ caricaS3(); }
   }
   el("sc1").addEventListener("click",   function(){ scheda2("s1"); });
   el("scS0").addEventListener("click",  function(){ scheda2("s0"); });
@@ -744,6 +797,7 @@
   el("scKo").addEventListener("click",  function(){ scheda2("ko"); });
   el("scDiv").addEventListener("click", function(){ scheda2("div"); });
   el("scInv").addEventListener("click", function(){ scheda2("inv"); });
+  el("scS3").addEventListener("click",  function(){ scheda2("s3"); });
 
   // carica la rubrica solo la prima volta che serve
   async function avviaS2(){
@@ -1718,6 +1772,234 @@
     a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
     a.download = "fit_candidati.csv"; a.click();
   });
+
+  // ==========================================================
+  // STADIO 3 — governo dei colloqui
+  // Qui si governa: chi è da convocare, chi è stato deciso, con quale
+  // esito e fino a quando vale. La conduzione vive in colloquio.html,
+  // che si apre su un candidato solo. Tenere separate le due superfici
+  // è deliberato: mentre hai una persona davanti, la scheda "Fit e
+  // decisione" e la cancellazione di un candidato non devono essere
+  // a un clic di distanza.
+  // ==========================================================
+  var S3CODA = [], S3GRAD = [];
+  var ESITO3 = {idoneo_A:"Idoneo · fascia A", idoneo_B:"Idoneo · fascia B",
+                riserva:"Riserva", non_idoneo:"Non idoneo"};
+
+  function dataIt3(d){
+    if(!d) return "—";
+    var x = new Date(d);
+    return ("0"+x.getDate()).slice(-2)+"/"+("0"+(x.getMonth()+1)).slice(-2)+"/"+x.getFullYear();
+  }
+  function giorniA(d){
+    if(!d) return null;
+    return Math.round((new Date(d) - new Date()) / 86400000);
+  }
+  function nome3(id){
+    var a = ANAG[id] || {};
+    return ((a.cognome||"")+" "+(a.nome||"")).trim() || "—";
+  }
+
+  async function caricaS3(){
+    el("s3Coda").innerHTML = "<p class='spiega'>Carico…</p>";
+    el("s3Grad").innerHTML = "";
+
+    var ra = await sb.from("candidates").select("id,nome,cognome,email,area,sede,esito,status");
+    if(!ra.error){ ANAG = {}; (ra.data||[]).forEach(function(c){ ANAG[c.id] = c; }); }
+
+    var rc = await sb.from("v_stage3_coda").select("*");
+    if(rc.error){
+      el("s3Coda").innerHTML = "<p class='msg'>" + esc(rc.error.message) +
+        "<br>Hai eseguito <strong>stage3_colloquio_v1_0.sql</strong> nel SQL Editor?</p>";
+      return;
+    }
+    S3CODA = rc.data || [];
+
+    var rg = await sb.from("v_graduatoria").select("*");
+    S3GRAD = rg.error ? [] : (rg.data || []);
+
+    renderS3Scadenze();
+    renderS3Coda();
+    renderS3Grad();
+  }
+
+  // --- quello che scade: riserve e idoneità
+  function renderS3Scadenze(){
+    var av = [];
+    S3GRAD.forEach(function(r){
+      if(r.esito === "riserva"){
+        var g = giorniA(r.riserva_verifica_entro);
+        if(g !== null && g < 0)
+          av.push("<b>"+esc(nome3(r.candidate_id))+"</b> — riserva scaduta il "+dataIt3(r.riserva_verifica_entro)+
+                  ": "+esc(r.riserva_condizione||""));
+        else if(g !== null && g <= 30)
+          av.push("<b>"+esc(nome3(r.candidate_id))+"</b> — riserva da verificare entro "+
+                  dataIt3(r.riserva_verifica_entro)+" ("+g+" giorni): "+esc(r.riserva_condizione||""));
+      }
+      if(r.idoneita_scaduta)
+        av.push("<b>"+esc(nome3(r.candidate_id))+"</b> — idoneità scaduta il "+dataIt3(r.valido_fino)+
+                (r.consenso_futuro ? ". C'è consenso per contatti futuri."
+                                   : ". <b>Nessun consenso per contatti futuri</b>: non ricontattabile."));
+      if(r.esito && r.esito !== "non_idoneo" && !r.comunicato_il)
+        av.push("<b>"+esc(nome3(r.candidate_id))+"</b> — deciso il "+dataIt3(r.deciso_il)+
+                ", esito non ancora comunicato.");
+    });
+    el("s3Scadenze").innerHTML = av.length
+      ? "<div class='avviso'><b>Da guardare</b><br>" + av.join("<br>") + "</div>"
+      : "";
+  }
+
+  // --- coda dei colloqui
+  function renderS3Coda(){
+    if(!S3CODA.length){
+      el("s3Coda").innerHTML = "<p class='spiega'>Nessun candidato supera il cancello, " +
+        "oppure tutti i colloqui sono già stati decisi.</p>";
+      return;
+    }
+    S3CODA.sort(function(a,b){
+      if(a.area !== b.area) return a.area < b.area ? -1 : 1;
+      return nome3(a.candidate_id).localeCompare(nome3(b.candidate_id));
+    });
+    var per = {};
+    S3CODA.forEach(function(r){ (per[r.area] = per[r.area] || []).push(r); });
+
+    var out = "";
+    Object.keys(per).forEach(function(area){
+      var righe = per[area];
+      var daFare = righe.filter(function(r){ return !r.stato_colloquio; }).length;
+      var conclusi = righe.filter(function(r){ return r.stato_colloquio === "concluso"; });
+      out += "<div style=\"font-family:'Fraunces',serif;color:var(--bosco);font-size:16px;margin:18px 0 6px;\">" +
+             esc(AREE[area]||area) + " · " + daFare + " da fare, " + conclusi.length + " conclusi" +
+             " <span class='sotto'>soglia " + (righe[0].fit_min) + " di fit, " +
+             (righe[0].copertura_min) + "% di copertura</span></div>";
+      if(daFare === 0 && conclusi.length > 1){
+        var primo = conclusi.slice().sort(function(a,b){
+          return (a.data_colloquio||"") < (b.data_colloquio||"") ? -1 : 1; })[0];
+        out += "<div class='avviso'><b>Area chiusa.</b> Prima di decidere, riapri il primo colloquio — " +
+               esc(nome3(primo.candidate_id)) + ", " + dataIt3(primo.data_colloquio) +
+               " — e rileggi le note. Il primo candidato viene valutato in modo sistematicamente diverso " +
+               "dagli altri, e con un valutatore unico questa è la correzione disponibile.</div>";
+      }
+      out += "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th>" +
+             "<th>Data</th><th>Segnali</th><th></th></tr></thead><tbody>";
+      righe.forEach(function(r){
+        var a = ANAG[r.candidate_id] || {};
+        var st = r.stato_colloquio || "da convocare";
+        var seg = "";
+        if(r.tetto_applicato) seg += "<span class='chip warn'>tetto " + r.tetto_valore + "</span>";
+        if(r.ko_da_decidere)  seg += "<span class='chip bad'>KO da decidere</span>";
+        out += "<tr><td><strong>" + esc(nome3(r.candidate_id)) + "</strong><br>" +
+               "<span class='sotto'>" + esc(a.email||"") + "</span></td>" +
+               "<td>" + esc(a.sede||"—") + "</td>" +
+               "<td><span class='chip" + (st==="concluso" ? " ok" : "") + "'>" + esc(st) + "</span></td>" +
+               "<td>" + dataIt3(r.data_colloquio) + "</td>" +
+               "<td>" + (seg || "<span class='sotto'>—</span>") + "</td>" +
+               "<td><button data-cond='" + r.candidate_id + "'>" +
+               (r.stato_colloquio ? "Riprendi" : "Conduci il colloquio") + "</button></td></tr>";
+      });
+      out += "</tbody></table>";
+    });
+    el("s3Coda").innerHTML = out;
+    el("s3Coda").querySelectorAll("[data-cond]").forEach(function(b){
+      b.addEventListener("click", function(){
+        window.open("colloquio.html?c=" + b.getAttribute("data-cond"), "_blank");
+      });
+    });
+  }
+
+  // --- graduatoria
+  function renderS3Grad(){
+    var fa = el("f3_area").value, fe = el("f3_esito").value;
+    var d = S3GRAD.filter(function(r){
+      if(fa && r.area !== fa) return false;
+      if(fe && r.esito !== fe) return false;
+      return true;
+    });
+    if(!d.length){
+      el("s3Grad").innerHTML = "<p class='spiega'>Nessuna decisione registrata con questi filtri.</p>";
+      return;
+    }
+    var ord = {idoneo_A:0, idoneo_B:1, riserva:2, non_idoneo:3};
+    d.sort(function(a,b){
+      if(a.area !== b.area) return a.area < b.area ? -1 : 1;
+      if(ord[a.esito] !== ord[b.esito]) return ord[a.esito] - ord[b.esito];
+      return (b.fit||0) - (a.fit||0);
+    });
+    var out = "<table><thead><tr><th>Candidato</th><th>Area</th><th>Esito</th><th class='n'>Fit</th>" +
+              "<th>Valido fino</th><th>Comunicato</th><th>Verbale</th></tr></thead><tbody>";
+    d.forEach(function(r){
+      var cls = r.esito.indexOf("idoneo_") === 0 ? "ok" : (r.esito === "riserva" ? "warn" : "bad");
+      var extra = "";
+      if(r.esito === "riserva")
+        extra = "<br><span class='sotto'>" + esc(r.riserva_condizione||"") + " · entro " +
+                dataIt3(r.riserva_verifica_entro) +
+                (r.riserva_scaduta ? " <b style='color:var(--errore)'>scaduta</b>" : "") + "</span>";
+      out += "<tr><td><strong>" + esc(nome3(r.candidate_id)) + "</strong>" +
+             (r.consenso_futuro ? "" : "<br><span class='sotto'>nessun consenso per contatti futuri</span>") + "</td>" +
+             "<td>" + esc(AREE[r.area]||r.area) + "</td>" +
+             "<td><span class='chip " + cls + "'>" + ESITO3[r.esito] + "</span>" +
+             (r.tetto_applicato ? " <span class='chip warn'>tetto</span>" : "") + extra + "</td>" +
+             "<td class='n'>" + (r.fit==null ? "—" : Number(r.fit).toFixed(1)) + "</td>" +
+             "<td>" + (r.idoneita_scaduta
+                        ? "<span style='color:var(--errore)'>" + dataIt3(r.valido_fino) + "</span>"
+                        : dataIt3(r.valido_fino)) + "</td>" +
+             "<td>" + (r.comunicato_il ? dataIt3(r.comunicato_il) : "<span class='sotto'>no</span>") + "</td>" +
+             "<td>" + (r.verbale_congelato
+                        ? "<button class='ghost' data-verb='" + r.candidate_id + "'>Apri</button>"
+                        : "<span class='sotto'>—</span>") + "</td></tr>";
+    });
+    out += "</tbody></table>";
+    el("s3Grad").innerHTML = out;
+    el("s3Grad").querySelectorAll("[data-verb]").forEach(function(b){
+      b.addEventListener("click", function(){ apriVerbale3(b.getAttribute("data-verb")); });
+    });
+  }
+
+  async function apriVerbale3(cid){
+    var r = await sb.from("stage3_interviews")
+      .select("verbale_testo,verbale_generato_il,condotto_da,data_colloquio,scenario_id")
+      .eq("candidate_id", cid).maybeSingle();
+    if(r.error || !r.data || !r.data.verbale_testo){
+      alert("Verbale non disponibile" + (r.error ? ": " + r.error.message : "."));
+      return;
+    }
+    el("s3vNome").textContent = nome3(cid);
+    el("s3vMeta").textContent = "Colloquio del " + dataIt3(r.data.data_colloquio) +
+      " · condotto da " + (r.data.condotto_da || "—") +
+      " · scenario " + (r.data.scenario_id || "—") +
+      " · verbale congelato il " + dataIt3(r.data.verbale_generato_il);
+    el("s3vTesto").textContent = r.data.verbale_testo;
+    el("p_s3Verb").style.display = "";
+    el("p_s3Verb").scrollIntoView({behavior: "smooth", block: "start"});
+  }
+
+  el("btnS3vChiudi").addEventListener("click", function(){ el("p_s3Verb").style.display = "none"; });
+  el("btnS3Agg").addEventListener("click", caricaS3);
+  el("f3_area").addEventListener("change", renderS3Grad);
+  el("f3_esito").addEventListener("change", renderS3Grad);
+
+  el("btnS3Csv").addEventListener("click", function(){
+    if(!S3GRAD.length){ el("s3Msg").textContent = "Niente da esportare."; return; }
+    var righe = [["cognome","nome","email","area","esito","fascia","fit","tetto","copertura",
+                  "valido_fino","riserva_condizione","riserva_entro","consenso_futuro",
+                  "deciso_da","deciso_il","comunicato_il"]];
+    S3GRAD.forEach(function(r){
+      var a = ANAG[r.candidate_id] || {};
+      righe.push([a.cognome||"", a.nome||"", a.email||"", AREE[r.area]||r.area||"",
+                  r.esito||"", r.fascia||"", r.fit==null?"":r.fit,
+                  r.tetto_applicato?"si":"no", r.copertura_pesi==null?"":r.copertura_pesi,
+                  r.valido_fino||"", r.riserva_condizione||"", r.riserva_verifica_entro||"",
+                  r.consenso_futuro?"si":"no", r.deciso_da||"",
+                  r.deciso_il||"", r.comunicato_il||""]);
+    });
+    var csv = righe.map(function(r){ return r.map(function(v){
+      return '"' + String(v==null?"":v).replace(/"/g,'""') + '"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "graduatoria_stadio3.csv"; a.click();
+    el("s3Msg").textContent = "Esportata.";
+  });
+
 
   avvia();
 })();

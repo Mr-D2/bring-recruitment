@@ -316,9 +316,29 @@
     el("consegne").innerHTML = out;
     el("boxFinale").style.display = DATI.accepted_at ? "" : "none";
 
-    // ripristino bozza locale
+    // ripristino: prima cio che e gia sul server, poi l'eventuale bozza locale.
+    // Serve nel caso di riapertura: dopo l'invio definitivo la bozza locale
+    // viene cancellata, e senza questo i campi tornerebbero vuoti pur essendo
+    // le consegne gia registrate. Un campo vuoto invita a riscrivere, e un
+    // salvataggio parziale sovrascriverebbe una consegna gia valutata.
+    var PRE = {};
+    Object.keys(DATI.gia_inviate || {}).forEach(function(k){
+      var c = (DATI.gia_inviate[k] || {}).contenuto;
+      if(!c || typeof c !== "object") return;
+      if(k === "scenario_osservativo"){
+        for(var n=1;n<=4;n++){
+          if(c["osservazione_"+n+"_livello"]) PRE["sc_lv"+n] = c["osservazione_"+n+"_livello"];
+          if(c["osservazione_"+n+"_motivazione"]) PRE["sc_mt"+n] = c["osservazione_"+n+"_motivazione"];
+        }
+        if(c.feedback_formativo) PRE["sc_fb"] = c.feedback_formativo;
+      } else if(c.testo){
+        PRE[k] = c.testo;
+      }
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll("[data-b]"), function(c){
       var k = c.getAttribute("data-b");
+      if(PRE[k] != null) c.value = PRE[k];
       if(BOZZA[k] != null) c.value = BOZZA[k];
       c.addEventListener("input", function(){ BOZZA[k] = c.value; salvaBozza(); });
       c.addEventListener("change", function(){ BOZZA[k] = c.value; salvaBozza(); });

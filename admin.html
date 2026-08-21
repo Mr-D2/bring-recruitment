@@ -206,6 +206,14 @@
   <!-- ============ STADIO 2 · VALUTAZIONE ============ -->
   <section id="vS2" style="display:none;">
 
+    <div class="pannello" id="p_compl">
+      <h2>Completezza delle consegne</h2>
+      <div class="spiega">Da guardare <strong>prima</strong> di valutare, ogni volta.
+      Un candidato incompleto valutato come completo produce un fit su copertura ridotta,
+      e il numero non lo dice.</div>
+      <div id="complBox"></div>
+    </div>
+
     <div class="pannello" id="p_pre">
       <h2>Pre-scoring</h2>
       <div class="spiega">Da eseguire <strong>una volta sola e fino in fondo</strong>, prima di
@@ -831,6 +839,8 @@
   // ---------- elenco sotto-criteri ----------
   async function caricaLista2(){
     el("p_lista").style.display = ""; el("p_val").style.display = "none"; el("p_pre").style.display = "";
+    el("p_compl").style.display = "";
+    caricaCompletezza();
     var r = await sb.from("v_stage2_progress").select("*");
     var t = el("tbLista"); t.innerHTML = "";
     if(r.error){ t.innerHTML = "<tr><td colspan='4' class='msg'>"+esc(r.error.message)+"</td></tr>"; return; }
@@ -857,7 +867,8 @@
     coda2 = (r.data||[]).filter(function(x){ return !x.human_done; });
     if(!coda2.length){ alert("Questa domanda è già stata valutata su tutti i candidati."); return; }
     idx2 = 0;
-    el("p_lista").style.display = "none"; el("p_pre").style.display = "none"; el("p_val").style.display = "";
+    el("p_lista").style.display = "none"; el("p_pre").style.display = "none";
+    el("p_compl").style.display = "none"; el("p_val").style.display = "";
     el("subTit").textContent = row.subcriterion_id;
     mostraCand2();
   }
@@ -1772,6 +1783,57 @@
     a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}));
     a.download = "fit_candidati.csv"; a.click();
   });
+
+  // ----------------------------------------------------------
+  // Completezza — il controllo che mancava.
+  // Il portale accettava inviti definitivi incompleti perche il
+  // conteggio includeva il contenitore 'stage1'. Corretto lato
+  // database; qui il controllo diventa visibile.
+  // ----------------------------------------------------------
+  async function caricaCompletezza(){
+    var box = el("complBox");
+    if(!box) return;
+    var r = await sb.from("v_stage2_completezza").select("*");
+    if(r.error){
+      box.innerHTML = "<p class='spiega'>" + esc(r.error.message) +
+        "<br>Hai eseguito <strong>stage2_fix_completezza_v1_2.sql</strong>?</p>";
+      return;
+    }
+    var d = (r.data || []).filter(function(x){ return x.accettato; });
+    if(!d.length){ box.innerHTML = "<p class='spiega'>Nessun candidato ha ancora accettato lo Stadio 2.</p>"; return; }
+
+    var inc = d.filter(function(x){ return x.mancanti && x.mancanti.length; });
+    var out = "";
+    if(inc.length){
+      out += "<div class='avviso'><b>" + inc.length + " candidat" + (inc.length===1?"o incompleto":"i incompleti") +
+             ".</b> Non valutarli come se fossero completi: il fit risulterebbe su copertura ridotta.</div>";
+    } else {
+      out += "<div class='avviso' style='background:#E2F3E1;border-color:#9CCB9B;'>" +
+             "Tutti i candidati che hanno accettato hanno consegnato per intero.</div>";
+    }
+    out += "<table><thead><tr><th>Candidato</th><th>Var.</th><th>Consegnate</th>" +
+           "<th>Mancanti</th><th>Invio definitivo</th></tr></thead><tbody>";
+    d.sort(function(a,b){
+      var ai = (a.mancanti&&a.mancanti.length)?0:1, bi = (b.mancanti&&b.mancanti.length)?0:1;
+      if(ai !== bi) return ai - bi;
+      return (a.cognome||"").localeCompare(b.cognome||"");
+    });
+    d.forEach(function(x){
+      var manc = x.mancanti || [];
+      out += "<tr><td><strong>" + esc(x.cognome||"") + "</strong><br>" +
+             "<span class='sotto'>" + esc(x.pseudonym||"") + "</span></td>" +
+             "<td>" + esc(x.variant||"") + "</td>" +
+             "<td>" + ((x.presenti||[]).length) + "</td>" +
+             "<td>" + (manc.length
+                       ? manc.map(function(k){ return "<span class='chip bad'>" + esc(k) + "</span>"; }).join(" ")
+                       : "<span class='chip ok'>nessuna</span>") + "</td>" +
+             "<td>" + (x.submitted_at
+                       ? dataIt3(x.submitted_at) + (x.in_ritardo ? " <span class='chip warn'>in ritardo</span>" : "")
+                       : "<span class='sotto'>non inviato</span>") + "</td></tr>";
+    });
+    out += "</tbody></table>";
+    box.innerHTML = out;
+  }
 
   // ==========================================================
   // STADIO 3 — governo dei colloqui

@@ -43,6 +43,9 @@
   .campo{margin-bottom:16px;}
   label{display:block;font-weight:500;margin-bottom:6px;}
   .aiuto{color:var(--grigio);font-size:13.5px;margin-bottom:8px;}
+  .aiuto.manca{background:#FBF4DF;border-left:3px solid #C9A227;color:#6B5410;
+               padding:10px 12px;border-radius:0 6px 6px 0;font-size:14px;margin:10px 0;}
+  #btnInvia:disabled{opacity:.45;cursor:not-allowed;}
   .msg{color:var(--errore);font-size:14px;margin-top:8px;}
   .ok{color:#2E7D31;}
   table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;}
@@ -127,6 +130,7 @@
       <textarea id="ai_dich" style="min-height:80px;"></textarea>
     </div>
     <p class="aiuto">L'invio definitivo chiude la consegna: dopo non sarà più possibile modificare.</p>
+    <div class="aiuto" id="mancaBox"></div>
     <button id="btnInvia">Invia in via definitiva</button>
     <div class="msg" id="inv_msg"></div>
   </div>
@@ -315,6 +319,7 @@
     });
     el("consegne").innerHTML = out;
     el("boxFinale").style.display = DATI.accepted_at ? "" : "none";
+    aggiornaMancanti();
 
     // ripristino: prima cio che e gia sul server, poi l'eventuale bozza locale.
     // Serve nel caso di riapertura: dopo l'invio definitivo la bozza locale
@@ -380,6 +385,9 @@
     btn.disabled = false;
     if(r.error){ st.innerHTML = "<span style='color:var(--errore)'>Non riuscito: "+esc(r.error.message)+"</span>"; return; }
     st.innerHTML = "<span class='fatto'>Salvata.</span> Puoi ancora modificarla fino all'invio definitivo.";
+    DATI.gia_inviate = DATI.gia_inviate || {};
+    DATI.gia_inviate[k] = {contenuto: c, file_path: (DATI.gia_inviate[k]||{}).file_path || null};
+    aggiornaMancanti();
   }
 
   // ---------- caricamento file ----------
@@ -401,6 +409,45 @@
     btn.disabled = false;
     if(r.error){ st.innerHTML = "<span style='color:var(--errore)'>"+esc(r.error.message)+"</span>"; return; }
     st.innerHTML = "<span class='fatto'>File ricevuto.</span> Puoi sostituirlo caricandone un altro.";
+    DATI.gia_inviate = DATI.gia_inviate || {};
+    DATI.gia_inviate[k] = {contenuto: (DATI.gia_inviate[k]||{}).contenuto || null, file_path: path};
+    aggiornaMancanti();
+  }
+
+
+  // ---------- che cosa manca ancora ----------
+  // ORDINE e la stessa lista di variant_consegne nel database: qui serve
+  // a dirlo al candidato subito, non dopo la dichiarazione AI e la conferma.
+  // Il controllo vero resta in chiudi_consegna_stadio2: questo e cortesia,
+  // quello e garanzia.
+  function mancanti(){
+    var lista = ORDINE[DATI.variant] || [];
+    var fatte = DATI.gia_inviate || {};
+    return lista.filter(function(k){
+      var c = fatte[k];
+      if(!c) return true;
+      if(k === "lesson_plan") return !c.file_path;
+      if(!c.contenuto || typeof c.contenuto !== "object") return true;
+      return Object.keys(c.contenuto).every(function(x){
+        return !String(c.contenuto[x] == null ? "" : c.contenuto[x]).trim(); });
+    }).map(function(k){ return ETICHETTE[k] || k; });
+  }
+
+  function aggiornaMancanti(){
+    var box = el("mancaBox");
+    if(!box) return;
+    var m = mancanti();
+    if(!m.length){
+      box.className = "aiuto";
+      box.innerHTML = "<span class='fatto'>Tutte le consegne risultano completate.</span> " +
+                      "Puoi procedere con l'invio definitivo.";
+    } else {
+      box.className = "aiuto manca";
+      box.innerHTML = "<b>Non hai ancora completato:</b> " + m.join(" \u00b7 ") +
+        ".<br>L'invio definitivo si sblocca quando tutte le consegne sono state salvate o caricate.";
+    }
+    var b = el("btnInvia");
+    if(b) b.disabled = m.length > 0;
   }
 
   // ---------- accettazione ----------
@@ -416,6 +463,10 @@
   // ---------- invio definitivo ----------
   el("btnInvia").addEventListener("click", async function(){
     el("inv_msg").textContent = "";
+    var m = mancanti();
+    if(m.length){
+      el("inv_msg").textContent = "Non puoi ancora inviare: manca " + m.join(", ") +
+        ". Completa e riprova."; return; }
     if(!(el("ai_dich").value||"").trim()){
       el("inv_msg").textContent = "Completa la dichiarazione sull'uso di strumenti di AI: basta una riga."; return; }
     if(!confirm("Invio definitivo: dopo non sarà più possibile modificare. Procedere?")) return;

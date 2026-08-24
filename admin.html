@@ -966,7 +966,7 @@
 
     // consegna completa: serve file_path e c1_combo, non solo il contenuto
     var r = await sb.from("stage2_consegne")
-                    .select("contenuto, file_path, c1_combo, candidate_id")
+                    .select("contenuto, file_path, c1_combo, candidate_id, fuori_portale, provenienza")
                     .eq("id", q.consegna_id).single();
     if(r.error){ el("elab").textContent = "Errore: " + r.error.message; return; }
     var cons = r.data;
@@ -1023,6 +1023,19 @@
     var slot = el("fileCons");
     if(slot){
       slot.innerHTML = "";
+      // Avviso di provenienza: se la consegna non e arrivata dal portale,
+      // il file e stato visto con il nome del candidato attaccato e lo
+      // pseudonimato su questa consegna non ha retto. Non e un difetto da
+      // nascondere: e una condizione da conoscere mentre si valuta.
+      if(cons.fuori_portale){
+        var av = document.createElement("div");
+        av.className = "avviso";
+        av.innerHTML = "<b>Consegna ricevuta fuori dal portale.</b> " +
+          esc(cons.provenienza || "") +
+          "<br>Su questa consegna lo pseudonimato non si applica: il file ti e " +
+          "arrivato con il nome del candidato. Tienine conto nel giudizio.";
+        slot.appendChild(av);
+      }
       if(cons.file_path){
         // Due vie, perche servono a cose diverse: l'anteprima e piu comoda
         // e resta la prima scelta, ma il visualizzatore del browser rende

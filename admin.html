@@ -1841,7 +1841,7 @@
     var r = await sb.from("v_stage2_completezza").select("*");
     if(r.error){
       box.innerHTML = "<p class='spiega'>" + esc(r.error.message) +
-        "<br>Hai eseguito <strong>stage2_fix_completezza_v1_2.sql</strong>?</p>";
+        "<br>Hai eseguito <strong>stage2_riapertura_ui_v1.sql</strong>?</p>";
       return;
     }
     var d = (r.data || []).filter(function(x){ return x.accettato; });
@@ -1857,7 +1857,7 @@
              "Tutti i candidati che hanno accettato hanno consegnato per intero.</div>";
     }
     out += "<table><thead><tr><th>Candidato</th><th>Var.</th><th>Consegnate</th>" +
-           "<th>Mancanti</th><th>Invio definitivo</th></tr></thead><tbody>";
+           "<th>Mancanti</th><th>Invio definitivo</th><th></th></tr></thead><tbody>";
     d.sort(function(a,b){
       var ai = (a.mancanti&&a.mancanti.length)?0:1, bi = (b.mancanti&&b.mancanti.length)?0:1;
       if(ai !== bi) return ai - bi;
@@ -1874,10 +1874,77 @@
                        : "<span class='chip ok'>nessuna</span>") + "</td>" +
              "<td>" + (x.submitted_at
                        ? dataIt3(x.submitted_at) + (x.in_ritardo ? " <span class='chip warn'>in ritardo</span>" : "")
-                       : "<span class='sotto'>non inviato</span>") + "</td></tr>";
+                       : "<span class='sotto'>non inviato</span>") + "</td>" +
+             "<td><button class='ghost riapri' data-cid='" + esc(x.candidate_id) +
+             "' data-cog='" + esc(x.cognome||"") + "'>" +
+             (x.submitted_at ? "Riapri" : "Proroga") + "</button></td></tr>";
     });
     out += "</tbody></table>";
+    out += "<div id='riapriBox'></div>";
     box.innerHTML = out;
+    Array.prototype.forEach.call(box.querySelectorAll("button.riapri"), function(b){
+      b.addEventListener("click", function(){
+        moduloRiapertura(b.getAttribute("data-cid"), b.getAttribute("data-cog"));
+      });
+    });
+  }
+
+  // ----------------------------------------------------------
+  // Riapertura e proroga — qui e non nel SQL Editor.
+  // admin_riapri_stadio2 pretende un JWT autenticato: dal SQL Editor
+  // si gira come postgres e il controllo scatta, per cui il 24 agosto
+  // la riapertura e passata simulando il JWT dentro un do $$. Funziona
+  // una volta; ripetuto, un aggiramento smette di essere un'eccezione.
+  // Qui il JWT c'e davvero e il controllo fa il suo mestiere.
+  // Il motivo e obbligatorio: una proroga senza ragione scritta e
+  // indistinguibile da un favore, e questa e una selezione.
+  // ----------------------------------------------------------
+  function scadenzaPredefinita(){
+    var d = new Date();
+    d.setDate(d.getDate() + 3);
+    d.setHours(23, 59, 0, 0);
+    var p = function(n){ return ("0"+n).slice(-2); };
+    return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+
+           "T"+p(d.getHours())+":"+p(d.getMinutes());
+  }
+
+  function moduloRiapertura(cid, cognome){
+    var box = el("riapriBox");
+    if(!box) return;
+    box.innerHTML =
+      "<div class='avviso' style='margin-top:12px'>" +
+      "<b>Riapertura della consegna &mdash; " + esc(cognome) + "</b>" +
+      "<p class='spiega'>L'invio definitivo torna aperto e il ritardo viene azzerato. " +
+      "Le consegne gia trasmesse restano dove sono, e quelle su cui hai gia registrato " +
+      "delle bande non sono piu modificabili dal candidato.</p>" +
+      "<div style='margin:8px 0'><label class='k'>Nuova scadenza</label><br>" +
+      "<input type='datetime-local' id='ri_data' value='" + scadenzaPredefinita() + "'></div>" +
+      "<div style='margin:8px 0'><label class='k'>Motivo &mdash; resta agli atti</label><br>" +
+      "<input type='text' id='ri_motivo' style='width:100%;max-width:520px' " +
+      "placeholder='es. difetto del portale: invio definitivo accettato senza lesson plan'></div>" +
+      "<button id='ri_ok'>Riapri</button> " +
+      "<button class='ghost' id='ri_no'>Annulla</button> " +
+      "<span id='ri_msg' class='spiega'></span></div>";
+    box.scrollIntoView({behavior:"smooth", block:"nearest"});
+
+    el("ri_no").addEventListener("click", function(){ box.innerHTML = ""; });
+    el("ri_ok").addEventListener("click", async function(){
+      var q = el("ri_data").value, mot = (el("ri_motivo").value||"").trim();
+      var msg = el("ri_msg");
+      if(!q){ msg.textContent = "Indica la nuova scadenza."; return; }
+      if(!mot){ msg.textContent = "Il motivo e obbligatorio."; return; }
+      var iso = new Date(q);
+      if(isNaN(iso.getTime())){ msg.textContent = "Data non valida."; return; }
+      if(iso.getTime() <= Date.now()){ msg.textContent = "La scadenza deve essere futura."; return; }
+      el("ri_ok").disabled = true; msg.textContent = "In corso\u2026";
+      var rr = await sb.rpc("admin_riapri_stadio2_ui", {
+        p_candidate_id: cid, p_scadenza: iso.toISOString(), p_motivo: mot });
+      el("ri_ok").disabled = false;
+      if(rr.error){ msg.innerHTML = "<span style='color:var(--errore)'>" + esc(rr.error.message) + "</span>"; return; }
+      box.innerHTML = "<p class='spiega'>Riaperto per <strong>" + esc(cognome) +
+        "</strong> fino al " + dataIt3(iso) + ". Avvisalo: il portale non manda notifiche.</p>";
+      caricaCompletezza();
+    });
   }
 
   // ==========================================================

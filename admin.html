@@ -1024,18 +1024,50 @@
     if(slot){
       slot.innerHTML = "";
       if(cons.file_path){
+        // Due vie, perche servono a cose diverse: l'anteprima e piu comoda
+        // e resta la prima scelta, ma il visualizzatore del browser rende
+        // i PDF e non i Word — su un .docx risponde "Couldn't load plugin".
+        // Per questo su Word l'anteprima non viene nemmeno offerta.
+        var nomeFile = (cons.file_path.split("/").pop() || "elaborato");
+        var estF = (nomeFile.split(".").pop() || "").toLowerCase();
+        var anteprimabile = (estF === "pdf");
+
+        async function urlFirmato(perScaricare){
+          var opz = perScaricare ? {download: nomeFile} : undefined;
+          var s = await sb.storage.from("stadio2")
+                    .createSignedUrl(cons.file_path, 600, opz);
+          if(s.error){ alert("Non riesco ad aprire il file: " + s.error.message); return null; }
+          return s.data.signedUrl;
+        }
+
+        if(anteprimabile){
+          var bA = document.createElement("button");
+          bA.className = "ghost";
+          bA.textContent = "Apri in anteprima";
+          bA.addEventListener("click", async function(){
+            var u = await urlFirmato(false);
+            if(u) window.open(u, "_blank");
+          });
+          slot.appendChild(bA);
+        }
+
         var b = document.createElement("button");
         b.className = "ghost";
+        b.style.marginLeft = anteprimabile ? "8px" : "";
         b.textContent = "Scarica l'elaborato allegato";
         b.addEventListener("click", async function(){
-          var s = await sb.storage.from("stadio2").createSignedUrl(cons.file_path, 600);
-          if(s.error){ alert("Non riesco ad aprire il file: " + s.error.message); return; }
-          window.open(s.data.signedUrl, "_blank");
+          var u = await urlFirmato(true);
+          if(!u) return;
+          var a = document.createElement("a");
+          a.href = u; a.download = nomeFile;
+          document.body.appendChild(a); a.click(); a.remove();
         });
         var nota = document.createElement("span");
         nota.className = "spiega";
         nota.style.marginLeft = "10px";
-        nota.textContent = "Il nome del file può contenere il pseudonimo, non il nome del candidato.";
+        nota.textContent = anteprimabile
+          ? "Il nome del file può contenere il pseudonimo, non il nome del candidato."
+          : "File Word: il browser non sa mostrarlo in anteprima, si apre scaricandolo. Il nome può contenere il pseudonimo, non il nome del candidato.";
         slot.appendChild(b); slot.appendChild(nota);
         slot.style.display = "";
       } else { slot.style.display = "none"; }

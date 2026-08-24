@@ -400,8 +400,18 @@
     if(["pdf","doc","docx"].indexOf(est) < 0){ st.innerHTML = "<span style='color:var(--errore)'>Formato non ammesso: usa PDF o Word.</span>"; return; }
 
     btn.disabled = true; st.textContent = "Caricamento…";
-    var path = DATI.candidate_id + "/" + k + "." + est;
-    var up = await sb.storage.from("stadio2").upload(path, file, {upsert:true});
+    // Percorso sempre nuovo, caricamento senza upsert.
+    // Con upsert:true una seconda consegna dello stesso file diventa un
+    // UPDATE su storage.objects: per riuscire, il client anonimo dovrebbe
+    // poter anche LEGGERE la riga esistente, e su questo bucket la lettura
+    // e riservata al team. Il risultato e "new row violates row-level
+    // security policy" al secondo tentativo. Con un percorso datato ogni
+    // caricamento e un INSERT, coperto da s2_upload_candidati.
+    // Il file valido e sempre quello indicato da file_path in
+    // stage2_consegne: le versioni precedenti restano nel bucket, inerti.
+    var stamp = new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
+    var path = DATI.candidate_id + "/" + k + "_" + stamp + "." + est;
+    var up = await sb.storage.from("stadio2").upload(path, file, {upsert:false});
     if(up.error){ btn.disabled=false; st.innerHTML = "<span style='color:var(--errore)'>Caricamento non riuscito: "+esc(up.error.message)+"</span>"; return; }
     var r = await sb.rpc("invia_consegna_stadio2", {
       p_token: TOKEN, p_email: EMAIL, p_consegna_key: k,

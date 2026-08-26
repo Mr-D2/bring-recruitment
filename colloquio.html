@@ -184,6 +184,35 @@
       "One of your students understands everything but never speaks. What do you do over a term?",
       "How would you explain to a parent that their child is progressing, without using a mark?"
     ],
+    // Blocco 3 in versione ricettiva, per primaria e mat-scienze.
+    // Il docente di quelle aree non ha l'obbligo di parlare inglese
+    // in classe, ma deve leggere materiali Cambridge e comunicazioni
+    // interne: si verifica la ricezione, non la produzione.
+    // Il testo NON va anticipato al candidato.
+    b3r: {
+      domande: [
+        "Contro quale convinzione diffusa scrive l'autore, e che cosa concede a quella convinzione?",
+        "Quale obiezione viene sollevata nel testo, e che cosa risponde l'autore?"
+      ],
+      testi: {
+        primaria: {
+          titolo: "Telling children they are clever",
+          paragrafi: [
+            "It is widely believed that frequent praise builds a child's confidence, and that a primary classroom should therefore be generous with it. The belief is not foolish: children who are told they are doing well do tend, in the short term, to work more willingly. What the research on feedback suggests, however, is that the wrong kind of praise quietly does the opposite of what we intend.",
+            "The distinction is between praising the person and describing the work. \"You're so clever\" tells a child that ability is something you either have or you lack. A child who has been told this often will, when the work becomes hard, read the difficulty as evidence that the label was mistaken \u2014 and the safest way to protect a label is to stop taking risks. \"You went back and checked the ones you weren't sure about\" says something quite different: that what produced the result was a decision, and decisions can be repeated.",
+            "Some colleagues object that this is a distinction without a difference \u2014 that children hear encouragement either way, and that withholding warmth in the name of precision is a poor trade. The objection deserves a serious answer, and it is this: nobody is proposing that teachers be less warm. Warmth is not the same thing as evaluation. A teacher can be affectionate all day long without ever telling a child what kind of person the marks say they are."
+          ]
+        },
+        matsci: {
+          titolo: "Correcting too soon",
+          paragrafi: [
+            "Most of us were trained to correct an error the moment we see it. Leave it standing, the reasoning goes, and the class will remember the wrong version. In mathematics and science this instinct is right about half the time, and the half where it is wrong matters more than the half where it is right.",
+            "It helps to separate two things that look identical on the page. A slip is a failure of execution: the pupil knows that a negative sign changes the outcome and has simply lost one in the copying. A misconception is a failure of the underlying model: the pupil believes, coherently and consistently, that heavier objects fall faster, and will go on believing it after being told otherwise. Correcting a slip takes five seconds and works. Correcting a misconception by announcing the right answer does almost nothing, because the pupil's model was not built out of the teacher's words and cannot be dismantled by them. What does work is slower: the misconception has to be brought into the open and made to produce a prediction, and the prediction has to fail in front of the pupil who made it.",
+            "The obvious objection is that this wastes time we do not have, and risks letting an error settle. It is a fair worry, but it misreads what is being proposed. The error is not being ignored; it is being made visible so that it can be argued with. What settles is a misconception nobody ever asked the pupil to state out loud."
+          ]
+        }
+      }
+    },
     b4: [
       "Organigramma: chi c'è e chi risponde a chi",
       "Ruoli: coordinatori, referenti, aree trainanti",
@@ -368,6 +397,12 @@
 
   function sc(id){ return (S.p.sottocriteri||[]).filter(function(x){ return x.subcriterion_id===id; })[0]; }
 
+  // Testo di lettura del blocco 3 ricettivo, secondo l'area del candidato.
+  function testoLettura(){
+    var area = (cands[S.cid] || {}).area;
+    return PROTOCOLLO.b3r.testi[area] || null;
+  }
+
   function widgetBanda(x){
     if(!x) return "";
     var d = x.descrittori || {};
@@ -453,6 +488,30 @@
 
     // ---- blocco 3
     var x3 = sc("s3_inglese_orale"), x3b = sc("s3_fasce_eta_orale");
+    var x3r = sc("s3_inglese_ricezione");
+    if(x3r && !x3){
+      var T = testoLettura();
+      h += "<div class='blk'><h2><i>Blocco 3</i>Lettura e comprensione dell'inglese</h2>"+
+           "<p class='spiega'>Quattro minuti. Il candidato legge <strong>ad alta voce</strong> il primo paragrafo, "+
+           "poi legge in silenzio il resto e risponde <strong>in italiano</strong>. Il testo non si anticipa "+
+           "e non si commenta prima delle risposte. Stesso testo e stesse domande per tutti i candidati dell'area.</p>";
+      if(T){
+        h += "<div class='k'>Testo assegnato · "+esc(T.titolo)+"</div>"+
+             "<div class='elab' style='max-height:none;white-space:normal;line-height:1.6;'>";
+        T.paragrafi.forEach(function(par, i){
+          h += "<p"+(i===0 ? " style='font-weight:600;'" : "")+">"+esc(par)+"</p>";
+        });
+        h += "</div><p class='spiega'>Il primo paragrafo, in grassetto, è quello da leggere ad alta voce.</p>";
+        h += "<div class='k'>Domande fisse</div><ul class='sonde'>";
+        PROTOCOLLO.b3r.domande.forEach(function(d){ h += "<li>"+esc(d)+"</li>"; });
+        h += "</ul>";
+      } else {
+        h += "<div class='avviso'>Nessun testo di lettura definito per questa area.</div>";
+      }
+      h += widgetBanda(x3r);
+      h += "<div class='riga'><label for='n3'>Note del blocco 3</label><textarea id='n3' rows='3' data-blocco='3'>"+
+           esc((p.blocchi_note||{})["3"]||"")+"</textarea></div></div>";
+    }
     if(x3){
       h += "<div class='blk'><h2><i>Blocco 3</i>Verifica orale di inglese</h2>"+
            "<p class='spiega'>Cinque minuti di conversazione professionale. Da qui in avanti, in inglese.</p>"+
@@ -796,6 +855,16 @@
     L.push("Sonda di stress: " + (S.stress ? "posta" : "non posta"));
     L.push("Banda assegnata (gestione dal vivo): " + bandaDi("s3_gestione_dal_vivo"));
     L.push("Note: " + (val("n2") || "—"));
+    if(sc("s3_inglese_ricezione")){
+      var TV = testoLettura();
+      L.push("");
+      L.push("BLOCCO 3 — LETTURA E COMPRENSIONE DELL'INGLESE");
+      L.push("Testo assegnato: " + (TV ? TV.titolo : "—") +
+             " (lettura ad alta voce del primo paragrafo, lettura silenziosa del resto, resoconto in italiano)");
+      L.push("Domande fisse poste, nell'ordine: " + PROTOCOLLO.b3r.domande.join(" / "));
+      L.push("Banda assegnata (lettura e comprensione): " + bandaDi("s3_inglese_ricezione"));
+      L.push("Note: " + (val("n3") || "—"));
+    }
     if(sc("s3_inglese_orale")){
       L.push("");
       L.push("BLOCCO 3 — VERIFICA ORALE DI INGLESE");

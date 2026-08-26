@@ -522,7 +522,7 @@
 </main>
 <div class="velo" id="veloMail" style="display:none;">
   <div class="modale">
-    <h2>Testo dell'email di invito</h2>
+    <h2 id="mailTitolo">Testo dell'email di invito</h2>
     <div class="spiega" id="mailChi"></div>
     <div class="riga">
       <label for="mailOgg">Oggetto</label>
@@ -1390,6 +1390,7 @@
     var link = urlConsegna(inv.token);
     var t = testoEmail(inv, link);
     MAIL_DEST = inv.email || "";
+    el("mailTitolo").textContent = "Testo dell'email di invito";
     el("mailChi").textContent = "Destinatario: " + (inv.cognome||"") + " " + (inv.nome||"") +
       " · " + MAIL_DEST + " · variante " + inv.variant + " · scenario " + (inv.scenario_id||"—");
     el("mailOgg").value = t.oggetto;
@@ -1841,7 +1842,7 @@
     var r = await sb.from("v_stage2_completezza").select("*");
     if(r.error){
       box.innerHTML = "<p class='spiega'>" + esc(r.error.message) +
-        "<br>Hai eseguito <strong>stage2_riapertura_ui_v1.sql</strong>?</p>";
+        "<br>Hai eseguito <strong>stage2_fix_completezza_v1_2.sql</strong>?</p>";
       return;
     }
     var d = (r.data || []).filter(function(x){ return x.accettato; });
@@ -1857,7 +1858,7 @@
              "Tutti i candidati che hanno accettato hanno consegnato per intero.</div>";
     }
     out += "<table><thead><tr><th>Candidato</th><th>Var.</th><th>Consegnate</th>" +
-           "<th>Mancanti</th><th>Invio definitivo</th><th></th></tr></thead><tbody>";
+           "<th>Mancanti</th><th>Invio definitivo</th></tr></thead><tbody>";
     d.sort(function(a,b){
       var ai = (a.mancanti&&a.mancanti.length)?0:1, bi = (b.mancanti&&b.mancanti.length)?0:1;
       if(ai !== bi) return ai - bi;
@@ -1874,77 +1875,10 @@
                        : "<span class='chip ok'>nessuna</span>") + "</td>" +
              "<td>" + (x.submitted_at
                        ? dataIt3(x.submitted_at) + (x.in_ritardo ? " <span class='chip warn'>in ritardo</span>" : "")
-                       : "<span class='sotto'>non inviato</span>") + "</td>" +
-             "<td><button class='ghost riapri' data-cid='" + esc(x.candidate_id) +
-             "' data-cog='" + esc(x.cognome||"") + "'>" +
-             (x.submitted_at ? "Riapri" : "Proroga") + "</button></td></tr>";
+                       : "<span class='sotto'>non inviato</span>") + "</td></tr>";
     });
     out += "</tbody></table>";
-    out += "<div id='riapriBox'></div>";
     box.innerHTML = out;
-    Array.prototype.forEach.call(box.querySelectorAll("button.riapri"), function(b){
-      b.addEventListener("click", function(){
-        moduloRiapertura(b.getAttribute("data-cid"), b.getAttribute("data-cog"));
-      });
-    });
-  }
-
-  // ----------------------------------------------------------
-  // Riapertura e proroga — qui e non nel SQL Editor.
-  // admin_riapri_stadio2 pretende un JWT autenticato: dal SQL Editor
-  // si gira come postgres e il controllo scatta, per cui il 24 agosto
-  // la riapertura e passata simulando il JWT dentro un do $$. Funziona
-  // una volta; ripetuto, un aggiramento smette di essere un'eccezione.
-  // Qui il JWT c'e davvero e il controllo fa il suo mestiere.
-  // Il motivo e obbligatorio: una proroga senza ragione scritta e
-  // indistinguibile da un favore, e questa e una selezione.
-  // ----------------------------------------------------------
-  function scadenzaPredefinita(){
-    var d = new Date();
-    d.setDate(d.getDate() + 3);
-    d.setHours(23, 59, 0, 0);
-    var p = function(n){ return ("0"+n).slice(-2); };
-    return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+
-           "T"+p(d.getHours())+":"+p(d.getMinutes());
-  }
-
-  function moduloRiapertura(cid, cognome){
-    var box = el("riapriBox");
-    if(!box) return;
-    box.innerHTML =
-      "<div class='avviso' style='margin-top:12px'>" +
-      "<b>Riapertura della consegna &mdash; " + esc(cognome) + "</b>" +
-      "<p class='spiega'>L'invio definitivo torna aperto e il ritardo viene azzerato. " +
-      "Le consegne gia trasmesse restano dove sono, e quelle su cui hai gia registrato " +
-      "delle bande non sono piu modificabili dal candidato.</p>" +
-      "<div style='margin:8px 0'><label class='k'>Nuova scadenza</label><br>" +
-      "<input type='datetime-local' id='ri_data' value='" + scadenzaPredefinita() + "'></div>" +
-      "<div style='margin:8px 0'><label class='k'>Motivo &mdash; resta agli atti</label><br>" +
-      "<input type='text' id='ri_motivo' style='width:100%;max-width:520px' " +
-      "placeholder='es. difetto del portale: invio definitivo accettato senza lesson plan'></div>" +
-      "<button id='ri_ok'>Riapri</button> " +
-      "<button class='ghost' id='ri_no'>Annulla</button> " +
-      "<span id='ri_msg' class='spiega'></span></div>";
-    box.scrollIntoView({behavior:"smooth", block:"nearest"});
-
-    el("ri_no").addEventListener("click", function(){ box.innerHTML = ""; });
-    el("ri_ok").addEventListener("click", async function(){
-      var q = el("ri_data").value, mot = (el("ri_motivo").value||"").trim();
-      var msg = el("ri_msg");
-      if(!q){ msg.textContent = "Indica la nuova scadenza."; return; }
-      if(!mot){ msg.textContent = "Il motivo e obbligatorio."; return; }
-      var iso = new Date(q);
-      if(isNaN(iso.getTime())){ msg.textContent = "Data non valida."; return; }
-      if(iso.getTime() <= Date.now()){ msg.textContent = "La scadenza deve essere futura."; return; }
-      el("ri_ok").disabled = true; msg.textContent = "In corso\u2026";
-      var rr = await sb.rpc("admin_riapri_stadio2_ui", {
-        p_candidate_id: cid, p_scadenza: iso.toISOString(), p_motivo: mot });
-      el("ri_ok").disabled = false;
-      if(rr.error){ msg.innerHTML = "<span style='color:var(--errore)'>" + esc(rr.error.message) + "</span>"; return; }
-      box.innerHTML = "<p class='spiega'>Riaperto per <strong>" + esc(cognome) +
-        "</strong> fino al " + dataIt3(iso) + ". Avvisalo: il portale non manda notifiche.</p>";
-      caricaCompletezza();
-    });
   }
 
   // ==========================================================
@@ -2068,7 +2002,8 @@
                "<td><span class='chip" + (st==="concluso" ? " ok" : "") + "'>" + esc(st) + "</span></td>" +
                "<td>" + dataIt3(r.data_colloquio) + "</td>" +
                "<td>" + (seg || "<span class='sotto'>—</span>") + "</td>" +
-               "<td><button data-cond='" + r.candidate_id + "'>" +
+               "<td><button class='ghost' data-inv3='" + r.candidate_id + "'>Invita</button> " +
+               "<button data-cond='" + r.candidate_id + "'>" +
                (r.stato_colloquio ? "Riprendi" : "Conduci il colloquio") + "</button></td></tr>";
       });
       out += "</tbody></table>";
@@ -2079,6 +2014,94 @@
         window.open("colloquio.html?c=" + b.getAttribute("data-cond"), "_blank");
       });
     });
+    el("s3Coda").querySelectorAll("[data-inv3]").forEach(function(b){
+      b.addEventListener("click", function(){ apriMailColloquio(b.getAttribute("data-inv3")); });
+    });
+  }
+
+  // --- convocazione al colloquio (Stadio 3)
+  //     Genera solo il testo. Non chiama s3_apri_colloquio: lo scenario
+  //     si assegna e data_colloquio si scrive quando apri davvero il
+  //     colloquio, non quando mandi la mail.
+  var CONV = {
+    giorno:       "venerd\u00ec 28 agosto",
+    giornoEN:     "Friday 28 August",
+    sede:         "Castelvenere",
+    indirizzo:    "[INDIRIZZO]",
+    durata:       "circa 45 minuti",
+    durataEN:     "about 45 minutes",
+    esitoEntro:   "luned\u00ec 31 agosto",
+    esitoEntroEN: "Monday 31 August",
+    prenota:      "[LINK DI PRENOTAZIONE]",
+    recapito:     "[EMAIL]"
+  };
+
+  // Riga sulla lingua, diversa per area:
+  //   inglese            -> conversazione professionale (produzione)
+  //   primaria, matsci   -> lettura e comprensione (ricezione)
+  //   lettere, musica    -> nessuna riga
+  function rigaLingua(area){
+    if(area === "inglese") return "Una parte del colloquio si svolger\u00e0 in inglese.\n\n";
+    if(area === "primaria" || area === "matsci")
+      return "Il colloquio comprende un breve momento di lettura in inglese: Le chieder\u00f2 di leggere " +
+             "un testo di argomento didattico e di riferirmene il contenuto in italiano. Non \u00e8 richiesta " +
+             "alcuna preparazione e non Le sar\u00e0 chiesto di sostenere una conversazione in inglese.\n\n";
+    return "";
+  }
+
+  function testoConvocazione(a){
+    var nome = (a.nome || "").trim();
+
+    if(a.area === "inglese"){
+      return {
+        oggetto: "br-ing \u00b7 Selection 2026/27 \u2014 invitation to the final interview",
+        corpo:
+"Dear " + nome + ",\n\n" +
+"your application has passed the first two stages of our selection process, and I would like to invite you to the final interview.\n\n" +
+"All interviews take place on " + CONV.giornoEN + ". I will be at our " + CONV.sede + " campus, " + CONV.indirizzo +
+": if that is within reach for you, we meet there; otherwise we do it online, and this makes no difference whatsoever to how you are assessed. You can pick the slot that suits you here:\n" +
+CONV.prenota + "\n\nThe interview lasts " + CONV.durataEN + ".\n\n" +
+"Let me tell you how it is structured, so that nothing comes as a surprise. We start from the work you submitted: I will ask you to talk me through some of the choices you made. We then move to a classroom situation that I will read out to you and that we will think through together \u2014 no preparation is needed, and there is no correct answer to find. We close with the part that matters most to me: the full picture of what working here actually involves, from how the school is organised to the calendar and the contractual arrangement. On that I will be exhaustive, because I would rather you decided with all the information in front of you.\n\n" +
+"The only thing I ask you to do beforehand is to re-read the lesson plan you sent us.\n\n" +
+"Part of the interview will be in English.\n\n" +
+"I will let you know the outcome by " + CONV.esitoEntroEN + ".\n\n" +
+"If none of the slots works for you, just write back and we will find another time: I am aware this is short notice.\n\n" +
+"For anything you need before then, you can write to me directly at " + CONV.recapito + ".\n\n" +
+"Best regards,\nDaniele Della Rosa\nDirezione \u00b7 br-ing"
+      };
+    }
+
+    return {
+      oggetto: "Selezione docenti br-ing 2026/27 \u2014 convocazione al colloquio",
+      corpo:
+"Gentile " + nome + ",\n\n" +
+"la Sua candidatura ha superato le prime due fasi della selezione e La invito al colloquio conclusivo.\n\n" +
+"I colloqui si svolgono tutti " + CONV.giorno + ". Sar\u00f2 nella sede di " + CONV.sede + ", " + CONV.indirizzo +
+": se per Lei \u00e8 raggiungibile ci vediamo l\u00ec, altrimenti facciamo il colloquio online, e questo non cambia nulla nella valutazione. Da questo link pu\u00f2 scegliere l'orario che preferisce:\n" +
+CONV.prenota + "\n\nIl colloquio dura " + CONV.durata + ".\n\n" +
+"Le anticipo come \u00e8 strutturato, perch\u00e9 non ci siano sorprese. Si parte dalla prova che ha consegnato: Le chieder\u00f2 di raccontarmi alcune delle scelte che ha fatto. Si prosegue con una situazione di classe che Le legger\u00f2 sul momento e su cui ragioneremo insieme \u2014 non serve alcuna preparazione, e non c'\u00e8 una risposta esatta da indovinare. Si chiude con la parte che per me conta di pi\u00f9: il quadro completo di che cosa significa lavorare qui, dall'organizzazione al calendario alla forma contrattuale. Su questo sar\u00f2 esaustivo, perch\u00e9 preferisco che Lei decida avendo tutte le informazioni davanti.\n\n" +
+"L'unica cosa che Le chiedo di fare prima \u00e8 rileggere il lesson plan che ci ha inviato.\n\n" +
+rigaLingua(a.area) +
+"Comunicher\u00f2 l'esito entro " + CONV.esitoEntro + ".\n\n" +
+"Se nessuno degli orari disponibili Le \u00e8 comodo, me lo scriva senza alcun imbarazzo e troviamo un'alternativa: il preavviso \u00e8 breve e me ne rendo conto.\n\n" +
+"Per qualsiasi comunicazione da qui a venerd\u00ec pu\u00f2 scrivermi direttamente a " + CONV.recapito + ".\n\n" +
+"Un cordiale saluto,\nDaniele Della Rosa\nDirezione \u00b7 br-ing"
+    };
+  }
+
+  function apriMailColloquio(cid){
+    var a = ANAG[cid] || {};
+    var t = testoConvocazione(a);
+    MAIL_DEST = a.email || "";
+    el("mailTitolo").textContent = "Convocazione al colloquio \u00b7 Stadio 3";
+    el("mailChi").textContent = "Destinatario: " + (a.cognome||"") + " " + (a.nome||"") +
+      " \u00b7 " + MAIL_DEST + " \u00b7 area " + (AREE[a.area]||a.area||"\u2014") +
+      " \u00b7 sede indicata: " + (a.sede||"\u2014") +
+      " \u2014 controlla che i campi fra parentesi quadre siano stati sostituiti.";
+    el("mailOgg").value = t.oggetto;
+    el("mailCorpo").value = t.corpo;
+    el("mailMsg").textContent = "";
+    el("veloMail").style.display = "flex";
   }
 
   // --- graduatoria

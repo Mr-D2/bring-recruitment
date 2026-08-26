@@ -1957,6 +1957,34 @@
       : "";
   }
 
+  // Una tabella della coda. Qui il fit si puo mostrare: admin.html e
+  // il luogo della misura, colloquio.html quello della decisione, e
+  // l'anti-ancoraggio vale la dove si assegnano le bande.
+  function tabellaCoda3(righe){
+    if(!righe.length) return "<p class='spiega'>Nessun candidato in questa fascia.</p>";
+    var out = "<table><thead><tr><th>Candidato</th><th>Sede</th><th class='n'>Fit</th><th>Stato</th>" +
+              "<th>Data</th><th>Segnali</th><th></th></tr></thead><tbody>";
+    righe.forEach(function(r){
+      var a = ANAG[r.candidate_id] || {};
+      var st = r.stato_colloquio || "da convocare";
+      var seg = "";
+      if(r.tetto_applicato) seg += "<span class='chip warn'>tetto " + r.tetto_valore + "</span>";
+      if(r.ko_da_decidere)  seg += "<span class='chip bad'>KO da decidere</span>";
+      out += "<tr><td><strong>" + esc(nome3(r.candidate_id)) + "</strong>" +
+             (r.fascia_cancello === "temporanei" ? " <span class='chip'>sotto soglia piena</span>" : "") + "<br>" +
+             "<span class='sotto'>" + esc(a.email||"") + "</span></td>" +
+             "<td>" + esc(a.sede||"\u2014") + "</td>" +
+             "<td class='n'>" + (r.fit==null ? "\u2014" : Number(r.fit).toFixed(1)) + "</td>" +
+             "<td><span class='chip" + (st==="concluso" ? " ok" : "") + "'>" + esc(st) + "</span></td>" +
+             "<td>" + dataIt3(r.data_colloquio) + "</td>" +
+             "<td>" + (seg || "<span class='sotto'>\u2014</span>") + "</td>" +
+             "<td><button class='ghost' data-inv3='" + r.candidate_id + "'>Invita</button> " +
+             "<button data-cond='" + r.candidate_id + "'>" +
+             (r.stato_colloquio ? "Riprendi" : "Conduci il colloquio") + "</button></td></tr>";
+    });
+    return out + "</tbody></table>";
+  }
+
   // --- coda dei colloqui
   function renderS3Coda(){
     if(!S3CODA.length){
@@ -1973,13 +2001,16 @@
 
     var out = "";
     Object.keys(per).forEach(function(area){
-      var righe = per[area];
+      var tutte = per[area];
+      var righe  = tutte.filter(function(r){ return r.fascia_cancello !== "temporanei"; });
+      var bassa  = tutte.filter(function(r){ return r.fascia_cancello === "temporanei"; });
       var daFare = righe.filter(function(r){ return !r.stato_colloquio; }).length;
       var conclusi = righe.filter(function(r){ return r.stato_colloquio === "concluso"; });
       out += "<div style=\"font-family:'Fraunces',serif;color:var(--bosco);font-size:16px;margin:18px 0 6px;\">" +
              esc(AREE[area]||area) + " · " + daFare + " da fare, " + conclusi.length + " conclusi" +
-             " <span class='sotto'>soglia " + (righe[0].fit_min) + " di fit, " +
-             (righe[0].copertura_min) + "% di copertura</span></div>";
+             " <span class='sotto'>soglia " + (tutte[0].fit_min) + " di fit (" +
+             (tutte[0].fit_min_temporanei) + " per incarichi temporanei), " +
+             (tutte[0].copertura_min) + "% di copertura</span></div>";
       if(daFare === 0 && conclusi.length > 1){
         var primo = conclusi.slice().sort(function(a,b){
           return (a.data_colloquio||"") < (b.data_colloquio||"") ? -1 : 1; })[0];
@@ -1988,25 +2019,17 @@
                " — e rileggi le note. Il primo candidato viene valutato in modo sistematicamente diverso " +
                "dagli altri, e con un valutatore unico questa è la correzione disponibile.</div>";
       }
-      out += "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th>" +
-             "<th>Data</th><th>Segnali</th><th></th></tr></thead><tbody>";
-      righe.forEach(function(r){
-        var a = ANAG[r.candidate_id] || {};
-        var st = r.stato_colloquio || "da convocare";
-        var seg = "";
-        if(r.tetto_applicato) seg += "<span class='chip warn'>tetto " + r.tetto_valore + "</span>";
-        if(r.ko_da_decidere)  seg += "<span class='chip bad'>KO da decidere</span>";
-        out += "<tr><td><strong>" + esc(nome3(r.candidate_id)) + "</strong><br>" +
-               "<span class='sotto'>" + esc(a.email||"") + "</span></td>" +
-               "<td>" + esc(a.sede||"—") + "</td>" +
-               "<td><span class='chip" + (st==="concluso" ? " ok" : "") + "'>" + esc(st) + "</span></td>" +
-               "<td>" + dataIt3(r.data_colloquio) + "</td>" +
-               "<td>" + (seg || "<span class='sotto'>—</span>") + "</td>" +
-               "<td><button class='ghost' data-inv3='" + r.candidate_id + "'>Invita</button> " +
-               "<button data-cond='" + r.candidate_id + "'>" +
-               (r.stato_colloquio ? "Riprendi" : "Conduci il colloquio") + "</button></td></tr>";
-      });
-      out += "</tbody></table>";
+      out += tabellaCoda3(righe);
+      if(bassa.length){
+        out += "<div class='avviso' style='margin-top:14px;'><b>Sotto la soglia piena \u00b7 " + bassa.length +
+               (bassa.length === 1 ? " candidato" : " candidati") + ".</b> Profili che non arrivano a " +
+               (tutte[0].fit_min) + " ma restano sopra " + (tutte[0].fit_min_temporanei) +
+               ": valutabili per incarichi temporanei, non necessariamente da convocare. " +
+               "Se ne convochi uno, guardali prima tutti insieme \u2014 la scelta va fatta per confronto, " +
+               "non un\u2019eccezione alla volta, altrimenti fra due mesi non saprai spiegare " +
+               "perch\u00e9 quello s\u00ec e l\u2019altro no.</div>";
+        out += tabellaCoda3(bassa);
+      }
     });
     el("s3Coda").innerHTML = out;
     el("s3Coda").querySelectorAll("[data-cond]").forEach(function(b){

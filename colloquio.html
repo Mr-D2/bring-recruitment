@@ -306,22 +306,39 @@
                " — e rileggi le note. Il primo candidato viene valutato in modo sistematicamente diverso dagli altri, "+
                "e con un valutatore unico questa è la correzione disponibile.</div>";
       }
-      out += "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th><th>Data</th><th></th></tr></thead><tbody>";
-      righe.forEach(function(r){
-        var st = r.stato_colloquio || "da convocare";
-        out += "<tr><td><strong>"+esc(nomeDi(r.candidate_id))+"</strong><br>"+
-               "<span style='color:var(--grigio);font-size:12.5px;'>"+esc((cands[r.candidate_id]||{}).email||"")+"</span></td>"+
-               "<td>"+esc((cands[r.candidate_id]||{}).sede||"—")+"</td>"+
-               "<td><span class='chip"+(st==="concluso"?" ok":"")+"'>"+esc(st)+"</span></td>"+
-               "<td>"+dataIt(r.data_colloquio)+"</td>"+
-               "<td><button data-apri='"+r.candidate_id+"'>"+(r.stato_colloquio?"Riapri":"Apri e conduci")+"</button></td></tr>";
-      });
-      out += "</tbody></table>";
+      out += tabellaFascia(righe.filter(function(r){ return r.fascia_cancello !== "temporanei"; }), null);
+      var bassa = righe.filter(function(r){ return r.fascia_cancello === "temporanei"; });
+      if(bassa.length){
+        out += "<div class='avviso' style='margin-top:14px;'><b>Sotto la soglia piena · "+bassa.length+
+               (bassa.length===1 ? " candidato" : " candidati")+".</b> Profili valutabili per incarichi "+
+               "temporanei, non necessariamente da convocare. Se ne convochi uno, guardali prima tutti "+
+               "insieme: la scelta va fatta per confronto, non caso per caso.</div>";
+        out += tabellaFascia(bassa, "temporanei");
+      }
     });
     el("coda").innerHTML = out;
     el("coda").querySelectorAll("[data-apri]").forEach(function(b){
       b.addEventListener("click", function(){ apriColloquio(b.getAttribute("data-apri")); });
     });
+  }
+
+  // Una tabella di coda. La fascia bassa e marcata riga per riga:
+  // il fit non compare mai qui, perche la pagina del colloquio non
+  // deve mostrarlo prima che le bande siano state registrate.
+  function tabellaFascia(righe, fascia){
+    if(!righe.length) return "";
+    var out = "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th><th>Data</th><th></th></tr></thead><tbody>";
+    righe.forEach(function(r){
+      var st = r.stato_colloquio || "da convocare";
+      out += "<tr><td><strong>"+esc(nomeDi(r.candidate_id))+"</strong>"+
+             (fascia === "temporanei" ? " <span class='chip'>sotto soglia piena</span>" : "")+"<br>"+
+             "<span style='color:var(--grigio);font-size:12.5px;'>"+esc((cands[r.candidate_id]||{}).email||"")+"</span></td>"+
+             "<td>"+esc((cands[r.candidate_id]||{}).sede||"—")+"</td>"+
+             "<td><span class='chip"+(st==="concluso"?" ok":"")+"'>"+esc(st)+"</span></td>"+
+             "<td>"+dataIt(r.data_colloquio)+"</td>"+
+             "<td><button data-apri='"+r.candidate_id+"'>"+(r.stato_colloquio?"Riapri":"Apri e conduci")+"</button></td></tr>";
+    });
+    return out + "</tbody></table>";
   }
 
   // ---------- graduatoria ----------
@@ -382,7 +399,15 @@
     var iv = await sb.from("stage3_interviews").select("*").eq("candidate_id", cid).maybeSingle();
     var v = (iv && iv.data) || {};
 
-    S = { cid: cid, p: r.data, lp: (lp && lp.data) || null, iv: v,
+    // Da quale fascia del cancello e entrato. Si legge la sola
+    // colonna fascia_cancello: tirare qui dentro il fit lo
+    // renderebbe disponibile prima dello sblocco, che e
+    // esattamente cio che l'anti-ancoraggio impedisce.
+    var fz = await sb.from("v_stage3_coda").select("fascia_cancello")
+                     .eq("candidate_id", cid).maybeSingle();
+    var v_fascia = (fz && fz.data && fz.data.fascia_cancello) || null;
+
+    S = { cid: cid, p: r.data, lp: (lp && lp.data) || null, iv: v, fascia: v_fascia,
           b4: {}, b5: {}, stress: !!v.sonda_stress, statale: null,
           fit: null, esito: null, verbale: null,
           dec: v.esito ? {esito: v.esito, motivo: v.esito_motivo, valido_fino: v.valido_fino,
@@ -769,6 +794,11 @@
   function renderDecisione(){
     var h = "<div class='blk'><h2>Decisione</h2>"+
       "<p class='spiega'>Il fit informa, non decide. L'esito è un atto tuo, con motivazione e data: è il punto 4 dell'informativa consegnata al candidato.</p>"+
+      (S.fascia === "temporanei"
+        ? "<div class='avviso'><b>Convocato dalla fascia sotto la soglia piena.</b> Non è un vincolo sull'esito "+
+          "e la fascia A resta disponibile: se il colloquio l'ha smentito, l'evidenza di oggi vale quanto quella "+
+          "degli altri. È un promemoria, perché il profilo era stato ammesso in vista di incarichi temporanei.</div>"
+        : "")+
       "<div class='esito4' data-esito>"+
       "<button data-v='idoneo_A'>Idoneo · fascia A</button>"+
       "<button data-v='idoneo_B'>Idoneo · fascia B</button>"+

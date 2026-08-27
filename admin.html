@@ -471,10 +471,14 @@
   <section id="vS3" style="display:none;">
 
     <div class="pannello">
-      <h2>Colloqui da condurre</h2>
-      <div class="spiega">Chi supera il cancello configurato in <code>s3_gate</code> e non ha ancora una decisione.
-      Il fit non compare in questa tabella: la conduzione del colloquio si apre in una pagina separata, e il numero
-      degli stadi precedenti resta invisibile finché tutte le bande non sono registrate.</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h2 style="flex:1;margin:0;">Colloqui da condurre</h2>
+        <button class="ghost" id="btnColloquio">Apri colloquio.html</button>
+      </div>
+      <div class="spiega">Chi supera il cancello configurato in <code>s3_gate</code> e non ha ancora una decisione,
+      diviso fra la soglia piena e la fascia valutabile per incarichi temporanei.
+      Il fit si vede qui perché questo è il luogo della misura; nella pagina del colloquio resta invisibile
+      finché tutte le bande non sono registrate.</div>
       <div id="s3Scadenze"></div>
       <div id="s3Coda"></div>
     </div>
@@ -536,6 +540,7 @@
     <div class="azioni">
       <button id="btnCopiaMail">Copia testo</button>
       <button class="ghost" id="btnCopiaTutto">Copia oggetto + testo</button>
+      <button class="ghost" id="btnOutlook">Apri in Outlook sul web</button>
       <button class="ghost" id="btnMailto">Apri nel client di posta</button>
       <button class="ghost" id="btnChiudiMail">Chiudi</button>
       <span class="spiega" id="mailMsg" style="margin-left:6px;"></span>
@@ -1415,13 +1420,34 @@
     copiaTesto("Oggetto: " + el("mailOgg").value + "\n\n" + el("mailCorpo").value);
     conferma("Oggetto e testo copiati.");
   });
-  el("btnMailto").addEventListener("click", function(){
-    var u = "mailto:" + encodeURIComponent(MAIL_DEST) +
-            "?subject=" + encodeURIComponent(el("mailOgg").value) +
+  el("btnColloquio").addEventListener("click", function(){
+    window.open("colloquio.html", "_blank");
+  });
+
+  // Outlook sul web accetta il corpo dentro un URL https, che non ha
+  // il limite stretto del gestore mailto: per le mail lunghe e la
+  // strada che funziona davvero.
+  el("btnOutlook").addEventListener("click", function(){
+    var u = "https://outlook.office.com/mail/deeplink/compose" +
+            "?to=" + encodeURIComponent(MAIL_DEST) +
+            "&subject=" + encodeURIComponent(el("mailOgg").value) +
             "&body=" + encodeURIComponent(el("mailCorpo").value);
+    window.open(u, "_blank");
+    conferma("Aperto in Outlook: ricontrolla il testo prima di inviare.");
+  });
+
+  el("btnMailto").addEventListener("click", function(){
+    var base = "mailto:" + encodeURIComponent(MAIL_DEST) +
+               "?subject=" + encodeURIComponent(el("mailOgg").value);
+    var u = base + "&body=" + encodeURIComponent(el("mailCorpo").value);
     if(u.length > 1900){
+      // Il gestore mailto tronca o rifiuta gli URL lunghi, e questo
+      // testo lo supera quasi sempre. Si apre comunque il client con
+      // destinatario e oggetto, e il corpo si incolla.
       copiaTesto(el("mailCorpo").value);
-      conferma("Testo troppo lungo per il client: l'ho copiato, incollalo a mano.");
+      conferma("Testo negli appunti. Apro il client con destinatario e oggetto: incolla con Ctrl+V. " +
+               "Per evitare il passaggio, usa \u201cApri in Outlook sul web\u201d.");
+      window.location.href = base;
       return;
     }
     window.location.href = u;
@@ -2050,12 +2076,12 @@
     giorno:       "venerd\u00ec 28 agosto",
     giornoEN:     "Friday 28 August",
     sede:         "Castelvenere",
-    indirizzo:    "[INDIRIZZO]",
+    mappa:        "https://maps.app.goo.gl/49eZh14PS8sfbY9u7",
     durata:       "circa 45 minuti",
     durataEN:     "about 45 minutes",
     esitoEntro:   "luned\u00ec 31 agosto",
     esitoEntroEN: "Monday 31 August",
-    prenota:      "[LINK DI PRENOTAZIONE]",
+    prenota:      "https://outlook.office.com/book/TheInterviewColloquioStadio3@br-ing.it/",
     recapito:     "[EMAIL]"
   };
 
@@ -2081,9 +2107,10 @@
         corpo:
 "Dear " + nome + ",\n\n" +
 "your application has passed the first two stages of our selection process, and I would like to invite you to the final interview.\n\n" +
-"All interviews take place on " + CONV.giornoEN + ". I will be at our " + CONV.sede + " campus, " + CONV.indirizzo +
-": if that is within reach for you, we meet there; otherwise we do it online, and this makes no difference whatsoever to how you are assessed. You can pick the slot that suits you here:\n" +
-CONV.prenota + "\n\nThe interview lasts " + CONV.durataEN + ".\n\n" +
+"All interviews take place on " + CONV.giornoEN + ". I will be at our " + CONV.sede + " campus \u2014 here is the exact location: " + CONV.mappa +
+"\nIf that is within reach for you, we meet there; otherwise we do it online, and this makes no difference whatsoever to how you are assessed.\n\n" +
+"Please pick the slot that suits you best here:\n" + CONV.prenota +
+"\n\nThe interview lasts " + CONV.durataEN + ".\n\n" +
 "Let me tell you how it is structured, so that nothing comes as a surprise. We start from the work you submitted: I will ask you to talk me through some of the choices you made. We then move to a classroom situation that I will read out to you and that we will think through together \u2014 no preparation is needed, and there is no correct answer to find. We close with the part that matters most to me: the full picture of what working here actually involves, from how the school is organised to the calendar and the contractual arrangement. On that I will be exhaustive, because I would rather you decided with all the information in front of you.\n\n" +
 "The only thing I ask you to do beforehand is to re-read the lesson plan you sent us.\n\n" +
 "Part of the interview will be in English.\n\n" +
@@ -2099,9 +2126,10 @@ CONV.prenota + "\n\nThe interview lasts " + CONV.durataEN + ".\n\n" +
       corpo:
 "Gentile " + nome + ",\n\n" +
 "la Sua candidatura ha superato le prime due fasi della selezione e La invito al colloquio conclusivo.\n\n" +
-"I colloqui si svolgono tutti " + CONV.giorno + ". Sar\u00f2 nella sede di " + CONV.sede + ", " + CONV.indirizzo +
-": se per Lei \u00e8 raggiungibile ci vediamo l\u00ec, altrimenti facciamo il colloquio online, e questo non cambia nulla nella valutazione. Da questo link pu\u00f2 scegliere l'orario che preferisce:\n" +
-CONV.prenota + "\n\nIl colloquio dura " + CONV.durata + ".\n\n" +
+"I colloqui si svolgono tutti " + CONV.giorno + ". Sar\u00f2 nella sede di " + CONV.sede + " \u2014 qui la posizione esatta: " + CONV.mappa +
+"\nSe per Lei \u00e8 raggiungibile ci vediamo l\u00ec, altrimenti facciamo il colloquio online, e questo non cambia nulla nella valutazione.\n\n" +
+"Da questo link pu\u00f2 scegliere l'orario che preferisce:\n" + CONV.prenota +
+"\n\nIl colloquio dura " + CONV.durata + ".\n\n" +
 "Le anticipo come \u00e8 strutturato, perch\u00e9 non ci siano sorprese. Si parte dalla prova che ha consegnato: Le chieder\u00f2 di raccontarmi alcune delle scelte che ha fatto. Si prosegue con una situazione di classe che Le legger\u00f2 sul momento e su cui ragioneremo insieme \u2014 non serve alcuna preparazione, e non c'\u00e8 una risposta esatta da indovinare. Si chiude con la parte che per me conta di pi\u00f9: il quadro completo di che cosa significa lavorare qui, dall'organizzazione al calendario alla forma contrattuale. Su questo sar\u00f2 esaustivo, perch\u00e9 preferisco che Lei decida avendo tutte le informazioni davanti.\n\n" +
 "L'unica cosa che Le chiedo di fare prima \u00e8 rileggere il lesson plan che ci ha inviato.\n\n" +
 rigaLingua(a.area) +

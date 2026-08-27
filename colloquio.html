@@ -329,8 +329,9 @@
     if(!righe.length) return "";
     var out = "<table><thead><tr><th>Candidato</th><th>Sede</th><th>Stato</th><th>Data</th><th></th></tr></thead><tbody>";
     righe.forEach(function(r){
-      var st = r.stato_colloquio || "da convocare";
+      var st = r.stato_colloquio || (r.convocato_il ? "convocato" : "da convocare");
       out += "<tr><td><strong>"+esc(nomeDi(r.candidate_id))+"</strong>"+
+             (r.convocato_slot ? " <span class='chip'>"+esc(r.convocato_slot)+"</span>" : "")+
              (fascia === "temporanei" ? " <span class='chip'>sotto soglia piena</span>" : "")+"<br>"+
              "<span style='color:var(--grigio);font-size:12.5px;'>"+esc((cands[r.candidate_id]||{}).email||"")+"</span></td>"+
              "<td>"+esc((cands[r.candidate_id]||{}).sede||"—")+"</td>"+

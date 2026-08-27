@@ -23,6 +23,7 @@
   button{padding:9px 16px;border-radius:6px;border:none;background:var(--bosco);color:var(--carta);
          font-weight:600;cursor:pointer;}
   button.ghost{background:none;color:var(--bosco);border:1px solid var(--linea);}
+  button.mini{padding:2px 8px;font-size:12px;line-height:1.5;}
   .login{max-width:380px;margin:60px auto;background:var(--bianco);border:1px solid var(--linea);
          border-radius:10px;padding:26px;display:flex;flex-direction:column;gap:12px;}
   .filtri{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
@@ -540,6 +541,7 @@
     <div class="azioni">
       <button id="btnCopiaMail">Copia testo</button>
       <button class="ghost" id="btnCopiaTutto">Copia oggetto + testo</button>
+      <button class="ghost" id="btnSegnaConv" style="display:none;">Segna come convocato</button>
       <button class="ghost" id="btnOutlook">Apri in Outlook sul web</button>
       <button class="ghost" id="btnMailto">Apri nel client di posta</button>
       <button class="ghost" id="btnChiudiMail">Chiudi</button>
@@ -1396,6 +1398,8 @@
     var t = testoEmail(inv, link);
     MAIL_DEST = inv.email || "";
     el("mailTitolo").textContent = "Testo dell'email di invito";
+    MAIL_CID = null;
+    el("btnSegnaConv").style.display = "none";
     el("mailChi").textContent = "Destinatario: " + (inv.cognome||"") + " " + (inv.nome||"") +
       " · " + MAIL_DEST + " · variante " + inv.variant + " · scenario " + (inv.scenario_id||"—");
     el("mailOgg").value = t.oggetto;
@@ -1420,6 +1424,11 @@
     copiaTesto("Oggetto: " + el("mailOgg").value + "\n\n" + el("mailCorpo").value);
     conferma("Oggetto e testo copiati.");
   });
+  var MAIL_CID = null;
+  el("btnSegnaConv").addEventListener("click", function(){
+    if(MAIL_CID) segnaConvocato(MAIL_CID);
+  });
+
   el("btnColloquio").addEventListener("click", function(){
     window.open("colloquio.html", "_blank");
   });
@@ -1989,10 +1998,10 @@
   function tabellaCoda3(righe){
     if(!righe.length) return "<p class='spiega'>Nessun candidato in questa fascia.</p>";
     var out = "<table><thead><tr><th>Candidato</th><th>Sede</th><th class='n'>Fit</th><th>Stato</th>" +
-              "<th>Data</th><th>Segnali</th><th></th></tr></thead><tbody>";
+              "<th>Convocazione</th><th>Data</th><th>Segnali</th><th></th></tr></thead><tbody>";
     righe.forEach(function(r){
       var a = ANAG[r.candidate_id] || {};
-      var st = r.stato_colloquio || "da convocare";
+      var st = r.stato_colloquio || (r.convocato_il ? "convocato" : "da convocare");
       var seg = "";
       if(r.tetto_applicato) seg += "<span class='chip warn'>tetto " + r.tetto_valore + "</span>";
       if(r.ko_da_decidere)  seg += "<span class='chip bad'>KO da decidere</span>";
@@ -2002,6 +2011,11 @@
              "<td>" + esc(a.sede||"\u2014") + "</td>" +
              "<td class='n'>" + (r.fit==null ? "\u2014" : Number(r.fit).toFixed(1)) + "</td>" +
              "<td><span class='chip" + (st==="concluso" ? " ok" : "") + "'>" + esc(st) + "</span></td>" +
+             "<td>" + (r.convocato_il
+                ? "<span class='chip ok'>convocato</span>" +
+                  (r.convocato_slot ? "<br><span class='sotto'>" + esc(r.convocato_slot) + "</span>" : "") +
+                  " <button class='ghost mini' data-conv0='" + r.candidate_id + "' title='Annulla la convocazione'>\u00d7</button>"
+                : "<button class='ghost mini' data-conv1='" + r.candidate_id + "'>Segna convocato</button>") + "</td>" +
              "<td>" + dataIt3(r.data_colloquio) + "</td>" +
              "<td>" + (seg || "<span class='sotto'>\u2014</span>") + "</td>" +
              "<td><button class='ghost' data-inv3='" + r.candidate_id + "'>Invita</button> " +
@@ -2065,6 +2079,12 @@
     });
     el("s3Coda").querySelectorAll("[data-inv3]").forEach(function(b){
       b.addEventListener("click", function(){ apriMailColloquio(b.getAttribute("data-inv3")); });
+    });
+    el("s3Coda").querySelectorAll("[data-conv1]").forEach(function(b){
+      b.addEventListener("click", function(){ segnaConvocato(b.getAttribute("data-conv1")); });
+    });
+    el("s3Coda").querySelectorAll("[data-conv0]").forEach(function(b){
+      b.addEventListener("click", function(){ annullaConvocato(b.getAttribute("data-conv0")); });
     });
   }
 
@@ -2140,6 +2160,31 @@ rigaLingua(a.area) +
     };
   }
 
+  // Segnare una convocazione non fa avanzare nessuno nella
+  // selezione: e un promemoria operativo, non un atto valutativo.
+  // Lo slot e testo libero perche la prenotazione vera vive in
+  // Bookings; qui serve solo a leggere la giornata a colpo d'occhio.
+  async function segnaConvocato(cid){
+    var a = ANAG[cid] || {};
+    var slot = window.prompt(
+      "Convocazione di " + ((a.cognome||"") + " " + (a.nome||"")).trim() +
+      "\n\nSlot concordato (facoltativo), per esempio: ven 28, 10:00, in presenza", "");
+    if(slot === null) return;
+    var r = await sb.rpc("s3_segna_convocato", {p_candidate_id: cid, p_slot: slot});
+    if(r.error){ alert("Errore: " + r.error.message); return; }
+    caricaS3();
+  }
+
+  async function annullaConvocato(cid){
+    var a = ANAG[cid] || {};
+    if(!window.confirm("Togliere il segno di convocazione a " +
+       ((a.cognome||"") + " " + (a.nome||"")).trim() +
+       "?\n\nNon annulla la prenotazione in Bookings e non avvisa il candidato.")) return;
+    var r = await sb.rpc("s3_annulla_convocato", {p_candidate_id: cid});
+    if(r.error){ alert("Errore: " + r.error.message); return; }
+    caricaS3();
+  }
+
   function apriMailColloquio(cid){
     var a = ANAG[cid] || {};
     var t = testoConvocazione(a);
@@ -2149,6 +2194,8 @@ rigaLingua(a.area) +
       " \u00b7 " + MAIL_DEST + " \u00b7 area " + (AREE[a.area]||a.area||"\u2014") +
       " \u00b7 sede indicata: " + (a.sede||"\u2014") +
       " \u2014 controlla che i campi fra parentesi quadre siano stati sostituiti.";
+    MAIL_CID = cid;
+    el("btnSegnaConv").style.display = "";
     el("mailOgg").value = t.oggetto;
     el("mailCorpo").value = t.corpo;
     el("mailMsg").textContent = "";
